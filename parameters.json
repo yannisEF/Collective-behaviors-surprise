@@ -1,0 +1,25 @@
+{
+    "agents":
+    {
+        "swarm_size": 20,
+        "sensor_range_0": 0.5,
+        "sensor_range_1": 1.0,
+        "speed": 0.1,
+        "noise": [-0.01, 0.01]
+    },
+
+    "evolution":
+    {
+        "evaluation_length": 500,
+        "population_size": 50,
+        "nb_generations": 30,
+        "nb_sim_run_per_evaluation": 10,
+        "elitism": 1,
+        "mutation_rate": 0.05
+    },
+
+    "map":
+    {
+        "ring_length": [5, 50]
+    }
+}
