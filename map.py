@@ -12,11 +12,26 @@ class Map:
     
     def _init_agent_position(self, new_agent:Agent):
         """
-        Initialize a new agent's position in the map
+        Initialize a new agent's position in the map, 
+        Returns its position
         """
 
-        new_agent.position = None
-        return new_agent.position
+        raise NotImplementedError("Overriden by other topologies")
+
+    def _move_agent(self, agent:Agent):
+        """
+        Moves an agent on the map
+        Returns its position
+        """
+
+        raise NotImplementedError("Overriden by other topologies")
+    
+    def _detect_others(self, agent:Agent, pos_to_agent:dict):
+        """
+        Updates the agent's sensor based on the others' positions
+        """
+
+        raise NotImplementedError("Overriden by other topologies")
 
     def add_agent(self, new_agent:Agent):
         """
@@ -40,12 +55,13 @@ class Map:
 
         # The map updates the agents' position
         for agent in self.agents:
-            self.agent_to_pos[agent] = agent.move()
+            new_position = self._move_agent(agent)
+            self.agent_to_pos[agent] = new_position
 
         # Checking the agents' sensors
         pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos)
         for agent in self.agents:
-            agent.detect(pos_to_agent)
+            self._detect_others(agent, pos_to_agent)
 
     def run(self, length:int):
         """
@@ -53,13 +69,3 @@ class Map:
         """
         for _ in range(length):
             self._step()
-
-class Ring(Map):
-    """
-    A ring around which agents can turn
-    """
-
-    def __init__(self, ring_length:int) -> None:
-        super().__init__()
-
-        self.ring_length = ring_length
