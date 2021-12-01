@@ -1,3 +1,4 @@
+from utils import *
 from agents import Agent
 
 class Map:
@@ -7,7 +8,6 @@ class Map:
 
     def __init__(self) -> None:
         self.agents = []
-        self.pos_to_agent = {}
         self.agent_to_pos = {}
     
     def _init_agent_position(self, new_agent:Agent):
@@ -15,8 +15,8 @@ class Map:
         Initialize a new agent's position in the map
         """
 
-        position = None
-        return position
+        new_agent.position = None
+        return new_agent.position
 
     def add_agent(self, new_agent:Agent):
         """
@@ -27,14 +27,25 @@ class Map:
             self.agents.append(new_agent)
 
             new_position = self._init_agent_position(new_agent)
-            self.pos_to_agent[new_position] = new_agent
             self.agent_to_pos[new_agent] = new_position
 
     def _step(self):
         """
         Run a step of the environment
         """
-        pass
+
+        # The agents take their decision
+        for agent in self.agents:
+            agent.take_decision()
+
+        # The map updates the agents' position
+        for agent in self.agents:
+            self.agent_to_pos[agent] = agent.move()
+
+        # Checking the agents' sensors
+        pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos)
+        for agent in self.agents:
+            agent.detect(pos_to_agent)
 
     def run(self, length:int):
         """
