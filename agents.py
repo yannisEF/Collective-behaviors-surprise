@@ -1,3 +1,5 @@
+import random
+
 from utils import *
 
 class Agent:
@@ -7,7 +9,7 @@ class Agent:
 
     id = 0
 
-    def __init__(self, sensor_range_0:float, sensor_range_1:float, speed:float, noise:list(float)) -> None:
+    def __init__(self, sensor_range_0:float, sensor_range_1:float, speed:float, noise) -> None:
         self.id = Agent.id
         Agent.id += 1
 
@@ -20,8 +22,16 @@ class Agent:
         self.speed = speed
         self.noise = noise
 
-        self.direction = 1 # direction is -1 or 1
+        self.direction = random.choice([-1, 1])
         self.position = None
+
+    def reset_sensors(self) -> None:
+        """
+        Reset the agent's sensors
+        """
+
+        self.sensor_0 = [False, False]
+        self.sensor_1 = [False, False]
 
     def take_decision(self):
         """
@@ -29,3 +39,6 @@ class Agent:
         """
 
         return "keep_direction"  # "switch_direction"
+    
+    def __str__(self):
+        return "Agent {}:\tposition: {}\tdirection: {}\tsensors 0: {}\tsensors 1: {}".format(self.id, self.position, self.direction, self.sensor_0, self.sensor_1)

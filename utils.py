@@ -5,10 +5,10 @@ def reverse_dict_with_repeat(A_dict:dict):
     """
     new_dict = {}
 
-    for key, value in A_dict:
-        if key in new_dict is True:
-            new_dict[key].append(value)
+    for key, value in A_dict.items():
+        if value in new_dict:
+            new_dict[value].append(key)
         else:
-            new_dict[key] = [value]
+            new_dict[value] = [key]
     
     return new_dict

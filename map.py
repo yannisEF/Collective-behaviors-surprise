@@ -9,6 +9,8 @@ class Map:
     def __init__(self) -> None:
         self.agents = []
         self.agent_to_pos = {}
+
+        self.name = "Map"
     
     def _init_agent_position(self, new_agent:Agent):
         """
@@ -32,7 +34,14 @@ class Map:
         """
 
         raise NotImplementedError("Overriden by other topologies")
+    
+    def show(self):
+        """
+        Outputs the map in the console
+        """
 
+        raise NotImplementedError("Overriden by other topologies")
+        
     def add_agent(self, new_agent:Agent):
         """
         Add an agent to the map
@@ -43,6 +52,7 @@ class Map:
 
             new_position = self._init_agent_position(new_agent)
             self.agent_to_pos[new_agent] = new_position
+            new_agent.position = new_position
 
     def _step(self):
         """
@@ -57,15 +67,27 @@ class Map:
         for agent in self.agents:
             new_position = self._move_agent(agent)
             self.agent_to_pos[agent] = new_position
+            agent.position = new_position
 
         # Checking the agents' sensors
         pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos)
         for agent in self.agents:
+            agent.reset_sensors()
             self._detect_others(agent, pos_to_agent)
 
-    def run(self, length:int):
+    def run(self, length:int, verbose=False):
         """
         Run the environment for a given length
         """
         for _ in range(length):
             self._step()
+
+            if verbose is True: print(self)
+    
+    def __str__(self):
+        text = "{}\t{} agents\n".format(self.name, len(self.agents))
+
+        for agent in self.agents:
+            text += str(agent) + "\n"
+        
+        return text[:-1]
