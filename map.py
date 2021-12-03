@@ -64,6 +64,7 @@ class Map:
         # The agents take their decision
         for agent in self.agents:
             agent.take_decision()
+            agent.predict_sensors()
 
         # The map updates the agents' position
         for agent in self.agents:
