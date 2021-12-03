@@ -1,5 +1,6 @@
 import random
 import sys
+import math
 
 from utils import *
 
@@ -11,7 +12,7 @@ class Ring(Map):
     A ring around which agents can turn
     """
 
-    def __init__(self, ring_length:int, resolution:float) -> None:
+    def __init__(self, ring_length:int, resolution:float=None) -> None:
         super().__init__()
 
         self.name = "Ring map"
@@ -34,7 +35,7 @@ class Ring(Map):
         """
 
         new_position = agent.position + agent.direction * agent.speed
-        new_position += agent.noise * random.random()
+        new_position += agent.noise * (2 * random.random() - 1)
 
         if self.resolution is not None:
             new_position = new_position - new_position % self.resolution
@@ -72,7 +73,7 @@ class Ring(Map):
             if all(agent.sensor_0) and all(agent.sensor_1):
                 break
 
-    def show(self, erase=True, stop=True):
+    def show_console(self, erase=True, stop=True):
         """
         Simple console output according to the map's resolution
         """
@@ -82,7 +83,7 @@ class Ring(Map):
 
         # Agents on the same position are printed at a different level
         pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos)
-        other_lines = [round(self.ring_length/self.resolution) * "." for _ in range(
+        other_lines = [round(self.ring_length/self.resolution) * '.' for _ in range(
             max([len(pos_to_agent[pos]) for pos in pos_to_agent]))]
 
         # Printing each agent at the correct index, if the index is already taken, outputs on another line
@@ -113,4 +114,18 @@ class Ring(Map):
             for i in range(len(self.agents) + len(other_lines)+2):
                 sys.stdout.write("\033[F")
                 sys.stdout.write("\033[K")
+    
+    def position_to_ring(self, size, center):
+        """
+        Casts the position to a ring grapical representation
+        """
+
+        positions = []
+        for agent in self.agents:
+            x = center[0] + .5 * size * math.cos(2 * math.pi * agent.position / self.ring_length)
+            y = center[1] + .5 * size * math.sin(2 * math.pi * agent.position / self.ring_length)
+
+            positions.append((x,y))
+
+        return positions
                 

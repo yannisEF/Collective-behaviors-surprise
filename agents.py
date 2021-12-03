@@ -31,7 +31,7 @@ class Agent:
         """
 
         self.sensor_0 = [False, False]
-        self.sensor_1 = [False, False]
+        self.sensor_1 = [False, False]   
 
     def take_decision(self):
         """

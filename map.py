@@ -1,3 +1,5 @@
+import random
+
 from utils import *
 from agents import Agent
 
@@ -35,7 +37,7 @@ class Map:
 
         raise NotImplementedError("Overriden by other topologies")
     
-    def show(self):
+    def show_console(self):
         """
         Outputs the map in the console
         """
@@ -79,10 +81,21 @@ class Map:
         """
         Run the environment for a given length
         """
+
         for _ in range(length):
             self._step()
 
             if verbose is True: print(self)
+    
+    def reset(self):
+        """
+        Reset the simulation
+        """
+
+        for agent in self.agents:
+            agent.reset_sensors()
+            agent.direction = random.choice([-1, 1])
+            agent.position = self._init_agent_position(agent)
     
     def __str__(self):
         text = "{}\t{} agents\n".format(self.name, len(self.agents))
