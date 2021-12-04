@@ -1,4 +1,5 @@
 from agents import Agent
+from menu import GenerationMenu
 from neural_network import ActionNetwork, PredictionNetwork
 
 class Generation:
@@ -6,7 +7,12 @@ class Generation:
     A class that evovles a number of agents
     """
 
+    id = 0
+
     def __init__(self, nb_runs_per_evaluation=10, elitism=1, mutation_rate=0.05) -> None:
+        self.id = Generation.id
+        Generation.id += 1
+        
         self.nb_runs_per_evaluation = 10
         self.elitism = 1
         self.mutation_rate = 0.05

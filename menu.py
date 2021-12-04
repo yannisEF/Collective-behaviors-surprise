@@ -32,24 +32,30 @@ class PlayMenu(tk.Frame):
 
 class GenerationMenu(tk.Frame):
     """
-    A menu that allows the user the advance through the generations of the simulation
+    A side-menu that allows the user the advance through the generations' evolution of the simulation, and to select the current visualization
     """
 
     def __init__(self, master):
         super().__init__(master)
 
-class ParametersMenu(tk.Frame):
-    """
-    A side menu that allows to define the simulation's parameters
-    """
+        self.frame_select = tk.Frame(self)
 
-    def __init__(self, master):
-        super().__init__(master)
+        self.listbox_generations = tk.Listbox(self.frame_select, selectmode='single')
+        self.button_show_generation = tk.Button(self.frame_select, text="Show generation", command=self.show_generation)
 
-        # Apply changes button
+        self.listbox_generations.grid(row=1, column=1)
+        self.button_show_generation.grid(row=2, column=1)
 
-        # Agent parameters
+        self.frame_select.grid(row=1, column=1)
 
-        # Map parameters
+        for gen in self.master.generations:
+            self.listbox_generations.insert('end', "Generation {}".format(gen.id))
+        self.listbox_generations.select_set(0)
 
-        # Generations parameters
+    def show_generation(self):
+        """
+        Shows on the selected generation on the master's canvas
+        """
+
+        index = self.listbox_generations.curselection()
+        self.master.map.generation_to_show = int(self.listbox_generations.get(index).split()[-1])

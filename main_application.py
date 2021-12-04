@@ -18,7 +18,7 @@ class MainApplication(tk.Frame):
 
     base_speed = int(1000 / 60)
     
-    def __init__(self, master, width=800, height=600, ring_length=25, simulation_speed=1, nb_agents=20, sensor_range_0=.5, sensor_range_1=1.0, speed=.1, noise=.01):
+    def __init__(self, master, ring_length=25, simulation_speed=1, nb_generations=3, nb_agents=20, sensor_range_0=.5, sensor_range_1=1.0, speed=.1, noise=.01):
         super().__init__(master)
 
         self.is_paused = True
@@ -26,19 +26,24 @@ class MainApplication(tk.Frame):
         self.simulation_speed = simulation_speed
 
         self.map = Ring(ring_length=ring_length)
-        self.generation = Generation()
+        self.generations = [Generation() for _ in range(nb_generations)]
 
-        for _ in range(nb_agents):
-            new_agent = self.generation.add_agent(
-                sensor_range_0=sensor_range_0, sensor_range_1=sensor_range_1, speed=speed, noise=noise)
-            self.map.add_agent(new_agent)
+        for i, generation in enumerate(self.generations):
+            for _ in range(nb_agents):
+                new_agent = self.generations[i].add_agent(sensor_range_0=sensor_range_0, sensor_range_1=sensor_range_1, speed=speed, noise=noise)
+                self.map.add_agent(i, new_agent)
         
+        self.generation_to_show = 0 # id of generation to show
+
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
         self.canvas.grid(row=1, column=1)
 
-        self.menu = PlayMenu(self)
-        self.menu.grid(row=2, column=1)
+        self.play_menu = PlayMenu(self)
+        self.play_menu.grid(row=2, column=1)
+
+        self.generation_menu = GenerationMenu(self)
+        self.generation_menu.grid(row=1, column=2)
 
         self.pack()
 
@@ -87,7 +92,7 @@ class MainApplication(tk.Frame):
         """
 
         if self.is_paused is False:
-            self.map.run(self.menu.scale_speed.get())            
+            self.map.run(self.play_menu.scale_speed.get())            
             self._make_frame()
 
         self.after(int(self.base_speed/self.simulation_speed), self.run)
