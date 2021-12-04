@@ -30,6 +30,13 @@ class PlayMenu(tk.Frame):
         self.master.map.reset()
         self.master._make_frame()
 
+class GenerationMenu(tk.Frame):
+    """
+    A menu that allows the user the advance through the generations of the simulation
+    """
+
+    def __init__(self, master):
+        super().__init__(master)
 
 class ParametersMenu(tk.Frame):
     """
