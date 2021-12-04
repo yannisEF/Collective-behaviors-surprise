@@ -9,10 +9,10 @@ class Map:
     """
 
     def __init__(self) -> None:
-        self.agents = {} # Generation's id:Agent
-        self.agent_to_pos = {} # Generation's id:{Agent:pos}
+        self.agents = {} # genome's id:Agent
+        self.agent_to_pos = {} # genome's id:{Agent:pos}
 
-        self.generation_to_show = 0 # id of generation to show
+        self.genome_to_show = 0 # id of genome to show
 
         self.name = "Map"
         self.length_sim = 0
@@ -47,75 +47,77 @@ class Map:
 
         raise NotImplementedError("Overriden by other topologies")
         
-    def add_agent(self, generation_id:int, new_agent:Agent):
+    def add_agent(self, genome_id:int, new_agent:Agent):
         """
         Add an agent to the map
         """
 
-        if generation_id not in self.agents:
-            self.agents[generation_id] = []
+        if genome_id not in self.agents:
+            self.agents[genome_id] = []
         
-        if generation_id not in self.agent_to_pos:
-            self.agent_to_pos[generation_id] = {}
+        if genome_id not in self.agent_to_pos:
+            self.agent_to_pos[genome_id] = {}
 
-        if new_agent not in self.agents[generation_id]:
-            self.agents[generation_id].append(new_agent)
+        if new_agent not in self.agents[genome_id]:
+            self.agents[genome_id].append(new_agent)
 
             new_position = self._init_agent_position(new_agent)
-            self.agent_to_pos[generation_id][new_agent] = new_position
+            self.agent_to_pos[genome_id][new_agent] = new_position
             new_agent.position = new_position
 
-    def _step(self):
+    def _step(self, genome_id):
         """
         Run a step of the environment
         """
 
-        self.length_sim += 1
+        agents = self.agents[genome_id]
 
-        for generation, agents in self.agents.items():
-            # The agents take their decision
-            for agent in agents:
-                agent.compute_score()
-                agent.take_decision()
-                agent.predict_sensors()
+        # The agents take their decision
+        for agent in agents:
+            agent.compute_score()
+            agent.take_decision()
+            agent.predict_sensors()
 
-            # The map updates the agents' position
-            for agent in agents:
-                new_position = self._move_agent(agent)
-                self.agent_to_pos[generation][agent] = new_position
-                agent.position = new_position
+        # The map updates the agents' position
+        for agent in agents:
+            new_position = self._move_agent(agent)
+            self.agent_to_pos[genome_id][agent] = new_position
+            agent.position = new_position
 
-            # Checking the agents' sensors
-            pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos[generation])
-            for agent in agents:
-                agent.reset_sensors()
-                self._detect_others(agent, pos_to_agent)
+        # Checking the agents' sensors
+        pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos[genome_id])
+        for agent in agents:
+            agent.reset_sensors()
+            self._detect_others(agent, pos_to_agent)
 
     def run(self, length:int, verbose=False):
         """
         Run the environment for a given length
         """
 
-        for _ in range(length):
-            self._step()
+        self.length_sim += length
 
-            if verbose is True: print(self)
+        for genome_id in self.agents:
+            for _ in range(length):
+                self._step(genome_id)
+
+                if verbose is True: print(self)
     
     def reset(self):
         """
         Reset the simulation
         """
 
-        for generation, agents in self.agents.items():
+        for genome, agents in self.agents.items():
             for agent in agents:
                 agent.reset()
                 agent.position = self._init_agent_position(agent)
     
     def __str__(self):
-        text = "{}\t{} generations \n".format(self.name, len(self.agents))
+        text = "{}\t{} genomes \n".format(self.name, len(self.agents))
 
-        for generation, agents in self.agents.items():
-            text += "Generation {}\t {} agents\n".format(generation, len(agents))
+        for genome, agents in self.agents.items():
+            text += "genome {}\t {} agents\n".format(genome, len(agents))
             for agent in agents:
                 text += str(agent) + "\n"
         

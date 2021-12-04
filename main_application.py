@@ -1,10 +1,10 @@
 import tkinter as tk
 
 from agents import Agent
-from generation import Generation
+from genome import Genome
 from map_ring import Ring
 
-from menu import PlayMenu, GenerationMenu
+from menu import PlayMenu, GenomeMenu
 
 
 class MainApplication(tk.Frame):
@@ -18,22 +18,24 @@ class MainApplication(tk.Frame):
 
     base_speed = int(1000 / 60)
     
-    def __init__(self, master, ring_length=25, simulation_speed=1, nb_generations=3, nb_agents=20, sensor_range_0=.5, sensor_range_1=1.0, speed=.1, noise=.01):
+    def __init__(self, master, ring_length=25, simulation_speed=1, max_steps=500, nb_genomes=50, nb_agents=20, sensor_range_0=.5, sensor_range_1=1.0, speed=.1, noise=.01):
         super().__init__(master)
 
         self.is_paused = True
 
+        self.max_steps = max_steps
+
         self.simulation_speed = simulation_speed
 
         self.map = Ring(ring_length=ring_length)
-        self.generations = [Generation() for _ in range(nb_generations)]
+        self.genomes = [Genome() for _ in range(nb_genomes)]
 
-        for i, generation in enumerate(self.generations):
+        for i, genome in enumerate(self.genomes):
             for _ in range(nb_agents):
-                new_agent = self.generations[i].add_agent(sensor_range_0=sensor_range_0, sensor_range_1=sensor_range_1, speed=speed, noise=noise)
+                new_agent = self.genomes[i].add_agent(sensor_range_0=sensor_range_0, sensor_range_1=sensor_range_1, speed=speed, noise=noise)
                 self.map.add_agent(i, new_agent)
         
-        self.generation_to_show = 0 # id of generation to show
+        self.Genome_to_show = 0 # id of Genome to show
 
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
@@ -42,8 +44,8 @@ class MainApplication(tk.Frame):
         self.play_menu = PlayMenu(self)
         self.play_menu.grid(row=2, column=1)
 
-        self.generation_menu = GenerationMenu(self)
-        self.generation_menu.grid(row=1, column=2)
+        self.Genome_menu = GenomeMenu(self)
+        self.Genome_menu.grid(row=1, column=2)
 
         self.pack()
 

@@ -73,7 +73,7 @@ class Ring(Map):
             if all(agent.sensor_0) and all(agent.sensor_1):
                 break
 
-    def show_console(self, generation_id=0, erase=True, stop=True):
+    def show_console(self, genome_id=0, erase=True, stop=True):
         """
         Simple console output according to the map's resolution
         """
@@ -82,7 +82,7 @@ class Ring(Map):
             raise NotImplementedError("Can't show continuous map for now")
 
         # Agents on the same position are printed at a different level
-        pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos[generation_id])
+        pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos[genome_id])
         other_lines = [round(self.ring_length/self.resolution) * '.' for _ in range(
             max([len(pos_to_agent[pos]) for pos in pos_to_agent]))]
 
@@ -96,7 +96,7 @@ class Ring(Map):
                     str(agent.id) + other_lines[i][index+1:]
 
         text = ""
-        for agent in self.agents[generation_id]:
+        for agent in self.agents[genome_id]:
             text += str(agent) + "\n"
 
         for line in other_lines:
@@ -111,7 +111,7 @@ class Ring(Map):
                 sys.exit(0)
 
         if erase is True:
-            for i in range(len(self.agents[generation_id]) + len(other_lines)+2):
+            for i in range(len(self.agents[genome_id]) + len(other_lines)+2):
                 sys.stdout.write("\033[F")
                 sys.stdout.write("\033[K")
     
@@ -121,7 +121,7 @@ class Ring(Map):
         """
 
         positions = []
-        for agent in self.agents[self.generation_to_show]:
+        for agent in self.agents[self.genome_to_show]:
             x = center[0] + .5 * size * math.cos(2 * math.pi * agent.position / self.ring_length)
             y = center[1] + .5 * size * math.sin(2 * math.pi * agent.position / self.ring_length)
 

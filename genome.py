@@ -1,8 +1,8 @@
 from agents import Agent
-from menu import GenerationMenu
+from menu import GenomeMenu
 from neural_network import ActionNetwork, PredictionNetwork
 
-class Generation:
+class Genome:
     """
     A class that evovles a number of agents
     """
@@ -10,8 +10,8 @@ class Generation:
     id = 0
 
     def __init__(self, nb_runs_per_evaluation=10, elitism=1, mutation_rate=0.05) -> None:
-        self.id = Generation.id
-        Generation.id += 1
+        self.id = Genome.id
+        Genome.id += 1
         
         self.nb_runs_per_evaluation = 10
         self.elitism = 1

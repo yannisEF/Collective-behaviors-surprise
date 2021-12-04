@@ -30,9 +30,9 @@ class PlayMenu(tk.Frame):
         self.master.map.reset()
         self.master._make_frame()
 
-class GenerationMenu(tk.Frame):
+class GenomeMenu(tk.Frame):
     """
-    A side-menu that allows the user the advance through the generations' evolution of the simulation, and to select the current visualization
+    A side-menu that allows the user the advance through the Genomes' evolution of the simulation, and to select the current visualization
     """
 
     def __init__(self, master):
@@ -40,22 +40,22 @@ class GenerationMenu(tk.Frame):
 
         self.frame_select = tk.Frame(self)
 
-        self.listbox_generations = tk.Listbox(self.frame_select, selectmode='single')
-        self.button_show_generation = tk.Button(self.frame_select, text="Show generation", command=self.show_generation)
+        self.listbox_genomes = tk.Listbox(self.frame_select, selectmode='single')
+        self.button_show_genome = tk.Button(self.frame_select, text="Show Genome", command=self.show_genome)
 
-        self.listbox_generations.grid(row=1, column=1)
-        self.button_show_generation.grid(row=2, column=1)
+        self.listbox_genomes.grid(row=1, column=1)
+        self.button_show_genome.grid(row=2, column=1)
 
         self.frame_select.grid(row=1, column=1)
 
-        for gen in self.master.generations:
-            self.listbox_generations.insert('end', "Generation {}".format(gen.id))
-        self.listbox_generations.select_set(0)
+        for gen in self.master.genomes:
+            self.listbox_genomes.insert('end', "Genome {}".format(gen.id))
+        self.listbox_genomes.select_set(0)
 
-    def show_generation(self):
+    def show_genome(self):
         """
-        Shows on the selected generation on the master's canvas
+        Shows on the selected Genome on the master's canvas
         """
 
-        index = self.listbox_generations.curselection()
-        self.master.map.generation_to_show = int(self.listbox_generations.get(index).split()[-1])
+        index = self.listbox_genomes.curselection()
+        self.master.map.genome_to_show = int(self.listbox_genomes.get(index).split()[-1])
