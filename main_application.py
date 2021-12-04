@@ -1,6 +1,7 @@
 import tkinter as tk
 
 from agents import Agent
+from generation import Generation
 from map_ring import Ring
 
 from menu import PlayMenu
@@ -24,8 +25,12 @@ class MainApplication(tk.Frame):
         self.simulation_speed = simulation_speed
 
         self.map = Ring(ring_length=ring_length)
+        self.generation = Generation()
+
         for _ in range(nb_agents):
-            self.map.add_agent(Agent(sensor_range_0, sensor_range_1, speed, noise))
+            new_agent = self.generation.add_agent(
+                sensor_range_0=sensor_range_0, sensor_range_1=sensor_range_1, speed=speed, noise=noise)
+            self.map.add_agent(new_agent)
         
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
@@ -82,6 +87,8 @@ class MainApplication(tk.Frame):
 
         if self.is_paused is False:
             self.map.run(self.menu.scale_speed.get())
+            self.generation.compute_fitness(self.map.length_sim)
+            
             self._make_frame()
 
         self.after(int(self.base_speed/self.simulation_speed), self.run)

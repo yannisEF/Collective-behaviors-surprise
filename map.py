@@ -13,6 +13,7 @@ class Map:
         self.agent_to_pos = {}
 
         self.name = "Map"
+        self.length_sim = 0
     
     def _init_agent_position(self, new_agent:Agent):
         """
@@ -61,8 +62,11 @@ class Map:
         Run a step of the environment
         """
 
+        self.length_sim += 1
+
         # The agents take their decision
         for agent in self.agents:
+            agent.compute_score()
             agent.take_decision()
             agent.predict_sensors()
 
@@ -94,8 +98,7 @@ class Map:
         """
 
         for agent in self.agents:
-            agent.reset_sensors()
-            agent.direction = random.choice([-1, 1])
+            agent.reset()
             agent.position = self._init_agent_position(agent)
     
     def __str__(self):
