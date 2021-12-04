@@ -1,4 +1,5 @@
 from agents import Agent
+from neural_network import ActionNetwork, PredictionNetwork
 
 class Generation:
     """
@@ -12,13 +13,16 @@ class Generation:
 
         self.agents = {} # id:Agent
         self.fitness = 0
+
+        self.action_network = ActionNetwork()
+        self.prediction_network = PredictionNetwork()
     
     def add_agent(self, **params) -> Agent:
         """
         Adds an agent to the population
         """
 
-        new_agent = Agent(**params)
+        new_agent = Agent(action_network=self.action_network, prediction_network=self.prediction_network, **params)
         self.agents[new_agent.id] = new_agent
 
         return new_agent

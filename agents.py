@@ -1,6 +1,7 @@
 import random
 import torch
 
+from copy import deepcopy
 from utils import *
 from neural_network import ActionNetwork, PredictionNetwork
 
@@ -11,7 +12,7 @@ class Agent:
 
     id = 0
 
-    def __init__(self, sensor_range_0:float, sensor_range_1:float, speed:float, noise) -> None:
+    def __init__(self, action_network:ActionNetwork, prediction_network:PredictionNetwork, sensor_range_0:float, sensor_range_1:float, speed:float, noise) -> None:
         self.id = Agent.id
         Agent.id += 1
 
@@ -29,8 +30,8 @@ class Agent:
         self.direction = random.choice([-1, 1])
         self.position = None
 
-        self.action_network = ActionNetwork()
-        self.prediction_network = PredictionNetwork()
+        self.action_network = deepcopy(action_network)
+        self.prediction_network = deepcopy(prediction_network)
 
         self.score = 0 # The sum of correct predictions over the existence of the agent
     
