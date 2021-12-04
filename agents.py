@@ -76,7 +76,11 @@ class Agent:
         Predicts the state of the sensors with the prediction network
         """
 
-        pass
-    
+        nn_input = torch.Tensor([self.direction > 0, *self.sensor_0, *self.sensor_1])[None, None, :]
+        nn_output = torch.squeeze(self.prediction_network.forward(nn_input))
+        
+        self.sensor_0_prediction = [bool(pred) for pred in torch.round(nn_output)[:2]]
+        self.sensor_1_prediction = [bool(pred) for pred in torch.round(nn_output)[2:]]
+        
     def __str__(self):
         return "Agent {}:\tposition: {}\tdirection: {}\tsensors 0: {}\tsensors 1: {}".format(self.id, self.position, self.direction, self.sensor_0, self.sensor_1)

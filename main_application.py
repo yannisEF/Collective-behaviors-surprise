@@ -4,7 +4,8 @@ from agents import Agent
 from generation import Generation
 from map_ring import Ring
 
-from menu import PlayMenu
+from menu import PlayMenu, GenerationMenu
+
 
 class MainApplication(tk.Frame):
     """
@@ -86,9 +87,7 @@ class MainApplication(tk.Frame):
         """
 
         if self.is_paused is False:
-            self.map.run(self.menu.scale_speed.get())
-            self.generation.compute_fitness(self.map.length_sim)
-            
+            self.map.run(self.menu.scale_speed.get())            
             self._make_frame()
 
         self.after(int(self.base_speed/self.simulation_speed), self.run)
