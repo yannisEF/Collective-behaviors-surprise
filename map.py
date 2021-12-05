@@ -97,11 +97,11 @@ class Map:
 
         self.length_sim += length
 
-        for genome_id in self.agents:
-            for _ in range(length):
-                self._step(genome_id)
+        
+        for _ in range(length):
+            self._step(self.genome_to_show)
 
-                if verbose is True: print(self)
+            if verbose is True: print(self)
     
     def reset(self):
         """

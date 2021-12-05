@@ -18,7 +18,7 @@ class MainApplication(tk.Frame):
 
     base_speed = int(1000 / 60)
     
-    def __init__(self, master, ring_length=25, simulation_speed=1, max_steps=500, nb_genomes=5, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
+    def __init__(self, master, ring_length=25, simulation_speed=1, max_steps=500, nb_genomes=50, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
         super().__init__(master)
 
         self.is_paused = True
