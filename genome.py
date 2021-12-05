@@ -9,7 +9,7 @@ class Genome:
 
     id = 0
 
-    def __init__(self, nb_runs_per_evaluation=10, elitism=1, mutation_rate=0.05) -> None:
+    def __init__(self, action_network=None, prediction_network=None, nb_runs_per_evaluation=10, elitism=1, mutation_rate=0.05) -> None:
         self.id = Genome.id
         Genome.id += 1
         
@@ -20,8 +20,8 @@ class Genome:
         self.agents = {} # id:Agent
         self.fitness = 0
 
-        self.action_network = ActionNetwork()
-        self.prediction_network = PredictionNetwork()
+        self.action_network = ActionNetwork() if action_network is None else action_network
+        self.prediction_network = PredictionNetwork() if prediction_network is None else prediction_network
     
     def add_agent(self, **params) -> Agent:
         """

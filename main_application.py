@@ -18,7 +18,7 @@ class MainApplication(tk.Frame):
 
     base_speed = int(1000 / 60)
     
-    def __init__(self, master, ring_length=25, simulation_speed=1, max_steps=500, nb_genomes=50, nb_agents=20, sensor_range_0=.5, sensor_range_1=1.0, speed=.1, noise=.01):
+    def __init__(self, master, ring_length=25, simulation_speed=1, max_steps=500, nb_genomes=5, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
         super().__init__(master)
 
         self.is_paused = True
@@ -27,15 +27,15 @@ class MainApplication(tk.Frame):
 
         self.simulation_speed = simulation_speed
 
-        self.map = Ring(ring_length=ring_length)
-        self.genomes = [Genome() for _ in range(nb_genomes)]
+        self.nb_agents = nb_agents
+        self.agent_param = agent_param
 
-        for i, genome in enumerate(self.genomes):
-            for _ in range(nb_agents):
-                new_agent = self.genomes[i].add_agent(sensor_range_0=sensor_range_0, sensor_range_1=sensor_range_1, speed=speed, noise=noise)
-                self.map.add_agent(i, new_agent)
-        
-        self.Genome_to_show = 0 # id of Genome to show
+        self.map = Ring(ring_length=ring_length)
+
+        self.genomes = []
+        self.id_to_genome = {}
+        for _ in range(nb_genomes):
+            self._load_genome()
 
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
@@ -52,6 +52,21 @@ class MainApplication(tk.Frame):
         self._make_frame()
         self.run()
     
+    def _load_genome(self, action_network=None, prediction_network=None):
+        """
+        Load a genome with specified action network and prediction network
+        """
+
+        new_genome = Genome(action_network=action_network, prediction_network=prediction_network)
+        self.genomes.append(new_genome)
+        self.id_to_genome[new_genome.id] = new_genome
+
+        for _ in range(self.nb_agents):
+                new_agent = new_genome.add_agent(**self.agent_param)
+                self.map.add_agent(new_genome.id, new_agent)
+        
+        return new_genome
+
     def _draw_map(self):
         """
         Draws a ring map
@@ -93,11 +108,12 @@ class MainApplication(tk.Frame):
         Main loop of the application, runs the simulation at a speed defined by the user
         """
 
-        if self.is_paused is False:
+        if self.is_paused is False and len(self.genomes) != 0:
             self.map.run(self.play_menu.scale_speed.get())            
             self._make_frame()
 
         self.after(int(self.base_speed/self.simulation_speed), self.run)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
