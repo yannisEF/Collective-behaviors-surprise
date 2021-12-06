@@ -48,5 +48,3 @@ class Genome:
         self.fitness = sum([agent.score for agent in self.agents.values()])
         self.fitness /= len(self.agents) * length_sim
     
-    # Need to add mutation and crossover
-    # Need to average the fitness over a number of runs

@@ -90,7 +90,7 @@ class Map:
             agent.reset_sensors()
             self._detect_others(agent, pos_to_agent)
 
-    def run(self, length:int, verbose=False):
+    def run(self, length:int, verbose=False, genome_to_run=None):
         """
         Run the environment for a given length
         """
@@ -99,19 +99,20 @@ class Map:
 
         
         for _ in range(length):
-            self._step(self.genome_to_show)
+            self._step(self.genome_to_show if genome_to_run is None else genome_to_run)
 
             if verbose is True: print(self)
     
-    def reset(self):
+    def reset(self, genome_to_reset=None):
         """
         Reset the simulation
         """
 
         for genome, agents in self.agents.items():
-            for agent in agents:
-                agent.reset()
-                agent.position = self._init_agent_position(agent)
+            if genome_to_reset is None or genome == genome_to_reset:
+                for agent in agents:
+                    agent.reset()
+                    agent.position = self._init_agent_position(agent)
     
     def __str__(self):
         text = "{}\t{} genomes \n".format(self.name, len(self.agents))

@@ -43,10 +43,12 @@ class GenomeMenu(tk.Frame):
 
     listbox_parameters = {"width":40, "height":10}
     button_parameters = {"width":15, "height":1}
+    frame_separation_parameters = {"width":40, "height":250}
 
     def __init__(self, master):
         super().__init__(master)
 
+        # Frame to select genomes
         self.frame_select = tk.Frame(self)
 
         self.listbox_genomes = tk.Listbox(self.frame_select, selectmode='single', **GenomeMenu.listbox_parameters)
@@ -65,13 +67,29 @@ class GenomeMenu(tk.Frame):
         self.listbox_genomes.grid(row=1, column=1)
         self.frame_select_buttons.grid(row=2, column=1)
 
-        self.frame_select.grid(row=1, column=1)
-
         self.button_delete_genome["width"] //= 2
 
         for gen in self.master.genomes:
             self.listbox_genomes.insert('end', "Genome {}".format(gen.id+1))
         self.listbox_genomes.select_set(0)
+
+        # Frame to separate UI elements
+        self.frame_separation = tk.Frame(self, **GenomeMenu.frame_separation_parameters)
+
+        # Frame to start the evolution process
+        self.frame_evolve = tk.Frame(self)
+
+        self.frame_evolve_buttons = tk.Frame(self.frame_evolve)
+        self.button_start_evolve = tk.Button(self.frame_evolve_buttons, text="Evolve genomes", command=self.start_evolution, **GenomeMenu.button_parameters)
+
+        self.button_start_evolve.grid(row=1, column=1)
+
+        self.frame_evolve_buttons.grid(row=1, column=1)
+
+        # Packing frames
+        self.frame_select.grid(row=1, column=1)
+        self.frame_separation.grid(row=2, column=1)
+        self.frame_evolve.grid(row=3, column=1)
 
     def get_selection(self):
         """
@@ -151,3 +169,10 @@ class GenomeMenu(tk.Frame):
 
         if len(self.master.genomes) == 1:
             self.master.map.genome_to_show = new_genome.id
+        
+    def start_evolution(self):
+        """
+        Starts the evolution process
+        """
+
+        self.master.evolve()

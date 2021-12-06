@@ -1,6 +1,7 @@
 import tkinter as tk
 
-from agents import Agent
+import cma
+
 from genome import Genome
 from map_ring import Ring
 
@@ -18,11 +19,12 @@ class MainApplication(tk.Frame):
 
     base_speed = int(1000 / 60)
     
-    def __init__(self, master, ring_length=25, simulation_speed=1, max_steps=500, nb_genomes=50, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
+    def __init__(self, master, ring_length=25, simulation_speed=1, max_steps=500, nb_run_fitness=10, nb_genomes=50, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
         super().__init__(master)
 
         self.is_paused = True
 
+        self.nb_run_fitness = nb_run_fitness
         self.max_steps = max_steps
 
         self.simulation_speed = simulation_speed
@@ -102,6 +104,33 @@ class MainApplication(tk.Frame):
         self.canvas.delete('all')
         self._draw_map()
         self._draw_agents()
+    
+    def _compute_genome_fitness(self, genome):
+        """
+        Return the average a genome's fitness over a number of runs
+        """
+        
+        reward = 0
+        for _ in range(self.nb_run_fitness):
+            self.map.reset(genome_to_reset=genome.id)
+            self.map.run(length=self.max_steps, genome_to_run=genome.id)
+            reward += genome.compute_fitness(self.nb_run_fitness)
+        
+        return reward / self.nb_run_fitness
+
+    def evolve(self):
+        """
+        Evolves the population of genomes
+        """
+
+        raise NotImplementedError("En cours d'implémentation")
+
+        start_solutions = [] # -> method in neural_networks to concatenate NN in tensor
+        es = cma.CMAEvolutionStrategy(start_solutions, None)
+        while not es.stop():
+            solutions = es.ask() # change to [Genome(action_network = , prediction_network =) for x in solutions]
+            es.tell(solutions, self._compute_genome_fitness)
+            
     
     def run(self):
         """
