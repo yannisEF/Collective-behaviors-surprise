@@ -1,3 +1,4 @@
+from os import name
 import tkinter as tk
 
 from utils import *
@@ -110,13 +111,13 @@ class GenomeMenu(tk.Frame):
         except tk.TclError:
             pass
     
-    def delete_genome(self):
+    def delete_genome(self, id_to_delete=None):
         """
-        Deletes the selected genome
+        Deletes the selected or specified genome
         """
         
         try:
-            genome = self.master.id_to_genome[self.get_selection() - 1]
+            genome = self.master.id_to_genome[id_to_delete if id_to_delete is not None else self.get_selection() - 1]
             self.listbox_genomes.delete(self.listbox_genomes.curselection())
 
             self.master.genomes.remove(genome)
@@ -154,6 +155,17 @@ class GenomeMenu(tk.Frame):
         except tk.TclError:
             pass
     
+    def add_genome(self, parameters={}, name=""):
+        """
+        Adds a genome with given parameters
+        """
+
+        new_genome = self.master._load_genome(**parameters)
+        self.listbox_genomes.insert("end", "{} {}".format("Genome" if len(name) == 0 else name, new_genome.id+1))
+
+        if len(self.master.genomes) == 1:
+            self.master.map.genome_to_show = new_genome.id
+
     def load_genome(self):
         """
         Loads a genome and adds it to the application
@@ -164,15 +176,11 @@ class GenomeMenu(tk.Frame):
         if loaded_name is None:
             return
 
-        new_genome = self.master._load_genome(**loaded_content)
-        self.listbox_genomes.insert("end", "{} {}".format(loaded_name, new_genome.id+1))
-
-        if len(self.master.genomes) == 1:
-            self.master.map.genome_to_show = new_genome.id
-        
+        self.add_genome(parameters=loaded_content, name=loaded_name)
+            
     def start_evolution(self):
         """
         Starts the evolution process
         """
 
-        self.master.evolve()
+        self.master.evolve(genome_to_evolve=self.master.id_to_genome[self.get_selection()-1])

@@ -34,9 +34,6 @@ class Agent:
         self.prediction_network = deepcopy(prediction_network)
 
         self.score = 0 # The sum of correct predictions over the existence of the agent
-
-        # Test the from_tensor
-        # self.action_network.from_tensor(self.action_network.to_tensor())
     
     def reset(self) -> None:
         """
