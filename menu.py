@@ -18,10 +18,12 @@ class PlayMenu(tk.Frame):
         self.button_play = tk.Button(self.frame_run, text="Play/Pause", command=self.change_pause)
         self.scale_speed = tk.Scale(self.frame_run, orient=tk.HORIZONTAL, **self.scale_parameters)
         self.button_reset = tk.Button(self.frame_run, text="Reset", command=self.reset_simulation)
+        self.button_show = tk.Button(self.frame_run, text="Show Fitness", command=self.show_boxplots)
 
         self.button_play.grid(row=1, column=1)
         self.scale_speed.grid(row=2, column=1)
         self.button_reset.grid(row=3, column=1)
+        self.button_show.grid(row=1, column=2)
 
         self.frame_run.grid(row=1, column=1)
 
@@ -37,6 +39,9 @@ class PlayMenu(tk.Frame):
 
         self.master._make_frame()
 
+    def show_boxplots(self):
+        read_csv_files(["Data/fitness.csv", "Data/fitness2.csv", "Data/fitness3.csv", "Data/fitness4.csv", "Data/fitness5.csv"])
+        
 class GenomeMenu(tk.Frame):
     """
     A side-menu that allows the user the advance through the Genomes' evolution of the simulation, and to select the current visualization

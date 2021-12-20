@@ -42,7 +42,8 @@ class MainApplication(tk.Frame):
         self.id_to_genome = {}
         for _ in range(nb_genomes):
             self._load_genome()
-
+        self.gen_fitness = []
+        
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
         self.canvas.grid(row=1, column=1)
@@ -151,7 +152,17 @@ class MainApplication(tk.Frame):
             solutions = es.ask()
             es.tell(solutions, [-self._compute_genome_fitness(gen) for gen in solutions]) # minimization so take opposite of fitness
             es.disp()
+
+            fitness_min = np.min(solutions)
+            data = (i, fitness_min)
+            self.gen_fitness.append(data)
+
             i += 1
+
+        with open('fitness.csv','w+') as out:
+            csv_out = csv.writer(out)
+            for row in self.gen_fitness:
+                csv_out.writerow(row)
 
         if replace_population is True:
             for gen in self.genomes:
@@ -163,7 +174,10 @@ class MainApplication(tk.Frame):
             prediction_network.from_tensor(torch.Tensor(gen_tensor[action_network.total_size:]))
 
             self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
-    
+        
+        if (i >= max_iteration):
+            print("------------------\n------------------")
+
     def run(self):
         """
         Main loop of the application, runs the simulation at a speed defined by the user
