@@ -112,7 +112,7 @@ def traceData(x, y, type="single", title="unnamed graph", xLabel="unnamed x-axis
     # Display
     pl.show() 
 
-def read_csv_files(filenames):
+def read_csv_files(filenames, title="unnamed graph", xLabel="unnamed x-axis", yLabel="unnamed y-axis"):
     
     rawlines = []
     lines = []
@@ -128,21 +128,15 @@ def read_csv_files(filenames):
         yData = []
         i = 0
         for l in lines[0]:
-            l2 = list(l) # Python 3: map returns an iterator, you can only iterate over once
+            l2 = list(l) 
             if i % 1 == 0:
                 xData.append( l2[0] )
                 yData.append( l2[1] )
-                print ( str(l2[0]) + "," + str(l2[1]) )
             i = i + 1
         traceData(xData, yData)
         
-    else:
-        
+    else:      
         # compile data from multiple files and display boxplots
-        if len(lines)<5:
-            print ("[ERROR] at least 5 data file are required to trace boxplots. Stop.")
-            quit()
-        
         for i in range (1,len(lines)):
             if len(lines[0]) != len(lines[i]):
                 print ("[ERROR] all data file must have the same amount of data. Stop.")
@@ -155,15 +149,13 @@ def read_csv_files(filenames):
             linesList.append([])
             for e2 in e1:
                 linesList[len(linesList)-1].append(list(e2))
-        #print ("linesList: ",linesList)
     
-        for i in range(0,len(linesList[0]), 1):
-            #print ("i = ",i)
+        for i in range(0,len(linesList[0]), 1): 
+            
             xData.append( int(linesList[0][i][0]) )
             l = []
             for j in range(len(linesList)):
                 l.append( linesList[j][i][1] )
             yData.append(l)
-            #print ( str(xData[-1]) + "," + str(yData[-1]))
     
-        traceData(xData, yData, type="multi")
+        traceData(xData, yData, type="multi", title=title, xLabel=xLabel, yLabel=yLabel)

@@ -2,6 +2,7 @@ import tkinter as tk
 
 import cma
 import time
+import csv
 import torch
 import numpy as np
 
@@ -42,7 +43,10 @@ class MainApplication(tk.Frame):
         self.id_to_genome = {}
         for _ in range(nb_genomes):
             self._load_genome()
+            
         self.gen_fitness = []
+        self.modify_length = False
+        self.f_name = ""
         
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
@@ -143,7 +147,6 @@ class MainApplication(tk.Frame):
         """
         Evolves the population of genomes STILL NEEDS MUTATION ?
         """
-
         i = 0
 
         start_solutions = np.array(genome_to_evolve.to_tensor()) # not all genomes?
@@ -154,29 +157,45 @@ class MainApplication(tk.Frame):
             es.disp()
 
             fitness_min = np.min(solutions)
-            data = (i, fitness_min)
+            data = (i, -fitness_min)
             self.gen_fitness.append(data)
 
             i += 1
-
-        with open('fitness.csv','w+') as out:
+        
+        nb = np.random.randint(1, 300)
+        
+        file_name = 'Data/fitness_t' + str(nb) + '_L=' + str(self.map.ring_length) + '.csv';
+        with open(file_name,'w+') as out:
             csv_out = csv.writer(out)
             for row in self.gen_fitness:
                 csv_out.writerow(row)
-
-        if replace_population is True:
-            for gen in self.genomes:
-                self.genome_menu.delete_genome(gen.id)
         
+        if (self.modify_length == True):
+            if (i == max_iteration):
+                file_name = 'Data/fitness_L' + str(nb) + '.csv';
+                if (self.f_name == ""):
+                    self.f_name = file_name
+                with open(self.f_name,'a+') as out:
+                    csv_out = csv.writer(out)
+                    last_elem = self.gen_fitness[-1]
+                    data = (self.map.ring_length, last_elem[1])
+                    csv_out.writerow(data)
+        
+        if (self.modify_length == False):
+            if replace_population is True:
+                for gen in self.genomes:
+                    self.genome_menu.delete_genome(gen.id)
+                
         action_network, prediction_network = ActionNetwork(), PredictionNetwork()
         for gen_tensor in solutions:
             action_network.from_tensor(torch.Tensor(gen_tensor[:action_network.total_size]))
             prediction_network.from_tensor(torch.Tensor(gen_tensor[action_network.total_size:]))
-
-            self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
+            if self.modify_length == False:
+                self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
         
         if (i >= max_iteration):
             print("------------------\n------------------")
+        self.gen_fitness = []
 
     def run(self):
         """
