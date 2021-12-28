@@ -46,7 +46,8 @@ class MainApplication(tk.Frame):
             
         self.gen_fitness = []
         self.modify_length = False
-        self.f_name = ""
+        self.fitness_L_fname = ""
+        self.covered_dist_L_fname = ""
         
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
@@ -164,7 +165,7 @@ class MainApplication(tk.Frame):
         
         nb = np.random.randint(1, 300)
         
-        file_name = 'Data/fitness_t' + str(nb) + '_L=' + str(self.map.ring_length) + '.csv';
+        file_name = 'Data/' + str(nb) +'fitness_over_t_L=' + str(self.map.ring_length) + '.csv';
         with open(file_name,'w+') as out:
             csv_out = csv.writer(out)
             for row in self.gen_fitness:
@@ -172,13 +173,22 @@ class MainApplication(tk.Frame):
         
         if (self.modify_length == True):
             if (i == max_iteration):
-                file_name = 'Data/fitness_L' + str(nb) + '.csv';
-                if (self.f_name == ""):
-                    self.f_name = file_name
-                with open(self.f_name,'a+') as out:
+                file_name = 'Data/' + str(nb) + 'fitness_over_L.csv';
+                if (self.fitness_L_fname == ""):
+                    self.fitness_L_fname = file_name
+                with open(self.fitness_L_fname,'a+') as out:
                     csv_out = csv.writer(out)
                     last_elem = self.gen_fitness[-1]
                     data = (self.map.ring_length, last_elem[1])
+                    csv_out.writerow(data)
+                
+                file_name2 = 'Data/' + str(nb) + 'covered_distance_over_L.csv';
+                if (self.covered_dist_L_fname == ""):
+                    self.covered_dist_L_fname = file_name2
+                with open(self.covered_dist_L_fname,'a+') as out:
+                    csv_out = csv.writer(out)
+                    #np.log(self.map.covered_dist/(self.nb_agents*self.map.t)) or np.log(self.map.covered_dist/self.nb_agents)
+                    data = (self.map.ring_length, np.log(self.map.covered_dist/(self.nb_agents*self.map.t))) 
                     csv_out.writerow(data)
         
         if (self.modify_length == False):
@@ -193,9 +203,9 @@ class MainApplication(tk.Frame):
             if self.modify_length == False:
                 self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
         
-        if (i >= max_iteration):
-            print("------------------\n------------------")
         self.gen_fitness = []
+        self.map.covered_dist = 0
+        self.map.old_position = None
 
     def run(self):
         """
