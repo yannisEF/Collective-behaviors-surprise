@@ -1,7 +1,6 @@
 import tkinter as tk
 
 import cma
-import time
 import csv
 import torch
 import numpy as np
@@ -9,7 +8,8 @@ import numpy as np
 from genome import Genome
 from map_ring import Ring
 
-from menu import PlayMenu, GenomeMenu
+from menu_play import PlayMenu
+from menu_genome import GenomeMenu
 from neural_network import ActionNetwork, PredictionNetwork
 
 

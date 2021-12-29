@@ -2,7 +2,6 @@ import torch
 from copy import deepcopy
 
 from agents import Agent
-from menu import GenomeMenu
 from neural_network import ActionNetwork, PredictionNetwork
 
 class Genome:
