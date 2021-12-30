@@ -36,6 +36,7 @@ class Agent:
         self.prediction_network = deepcopy(prediction_network)
 
         self.score = 0 # The sum of correct predictions over the existence of the agent
+        self.position_history = [] # The history of the agent's positions
     
     def reset(self) -> None:
         """
@@ -44,7 +45,9 @@ class Agent:
 
         self.reset_sensors()
         self.direction = random.choice([-1, 1])
+
         self.score = 0
+        self.distance_traveled = 0
 
     def reset_sensors(self) -> None:
         """

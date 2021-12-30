@@ -10,13 +10,18 @@ from map_ring import Ring
 
 from menu_play import PlayMenu
 from menu_genome import GenomeMenu
+from menu_show import ShowMenu
+
 from neural_network import ActionNetwork, PredictionNetwork
+from utils import get_time_stamp
 
 
 class MainApplication(tk.Frame):
     """
     An application that allows to visualize the simulation, currently only on a ring map.
     """
+
+    frame_side_separation_parameters = {"height":40}
 
     canvas_parameters = {"width":800, "height":600, "bg":"black"}
     map_parameters = {"width":6, "size":500, "color":"white"}
@@ -44,7 +49,6 @@ class MainApplication(tk.Frame):
         for _ in range(nb_genomes):
             self._load_genome()
             
-        self.gen_fitness = []
         self.modify_length = False
         self.fitness_L_fname = ""
         self.covered_dist_L_fname = ""
@@ -53,11 +57,23 @@ class MainApplication(tk.Frame):
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
         self.canvas.grid(row=1, column=1)
 
-        self.play_menu = PlayMenu(self)
-        self.play_menu.grid(row=2, column=1)
+        bottom_menu = tk.Frame(self)
 
-        self.genome_menu = GenomeMenu(self)
+        self.play_menu = PlayMenu(bottom_menu, self)
+        self.play_menu.grid(row=2, column=1)
+        
+        side_menu = tk.Frame(self)
+
+        self.genome_menu = GenomeMenu(side_menu, self)
+        side_separation = tk.Frame(side_menu, **self.frame_side_separation_parameters)
+        self.show_menu = ShowMenu(side_menu, self)
+
         self.genome_menu.grid(row=1, column=2)
+        side_separation.grid(row=2, column=2)
+        self.show_menu.grid(row=3, column=2)
+
+        bottom_menu.grid(row=2, column=1)
+        side_menu.grid(row=1, column=2)
 
         self.pack()
 
@@ -73,7 +89,6 @@ class MainApplication(tk.Frame):
             self.is_paused = True
             result = function(self, *args, **kwargs)
             self.is_paused = False
-            self.run()
         return inner
 
     def _load_genome(self, action_network=None, prediction_network=None, new_genome=None):
@@ -146,43 +161,49 @@ class MainApplication(tk.Frame):
     @_pause_during_execution
     def evolve(self, genome_to_evolve, replace_population=True, max_iteration=30):
         """
-        Evolves the population of genomes STILL NEEDS MUTATION ?
+        Evolves the population of genomes
         """
-        i = 0
 
-        start_solutions = np.array(genome_to_evolve.to_tensor()) # not all genomes?
+        # CMA-ES
+        start_solutions = np.array(genome_to_evolve.to_tensor())
         es = cma.purecma.CMAES(start_solutions, 0.5)
+
+        # Data to register
+        gen_fitness = []
+        covered_distance = 0
+
+        i = 0
         while not es.stop() and i < max_iteration:
             solutions = es.ask()
-            es.tell(solutions, [-self._compute_genome_fitness(gen) for gen in solutions]) # minimization so take opposite of fitness
+            fitness = [self._compute_genome_fitness(gen) for gen in solutions]
+
+            es.tell(solutions, [-fit for fit in fitness]) # minimization so take opposite of fitness
             es.disp()
 
-            fitness_min = np.min(solutions)
-            data = (i, -fitness_min)
-            self.gen_fitness.append(data)
+            best_fit = np.max(fitness)
+            gen_fitness.append(best_fit)
 
             i += 1
         
-        nb = np.random.randint(1, 300)
-        
-        file_name = 'Data/' + str(nb) +'fitness_over_t_L=' + str(self.map.ring_length) + '.csv';
-        with open(file_name,'w+') as out:
+        # Saving the results in a csv file
+        filename = 'Data/' + get_time_stamp() +'best_fitness_over_generation_L=' + str(self.map.ring_length) + '.csv'
+        with open(filename,'w+') as out:
             csv_out = csv.writer(out)
-            for row in self.gen_fitness:
-                csv_out.writerow(row)
+            for i, row in enumerate(gen_fitness):
+                csv_out.writerow((i,row))
         
-        if (self.modify_length == True):
-            if (i == max_iteration):
-                file_name = 'Data/' + str(nb) + 'fitness_over_L.csv';
+        if self.modify_length is True:
+            if i == max_iteration:
+                file_name = 'Data/' + str(nb) + 'fitness_over_L.csv'
                 if (self.fitness_L_fname == ""):
                     self.fitness_L_fname = file_name
                 with open(self.fitness_L_fname,'a+') as out:
                     csv_out = csv.writer(out)
-                    last_elem = self.gen_fitness[-1]
+                    last_elem = gen_fitness[-1]
                     data = (self.map.ring_length, last_elem[1])
                     csv_out.writerow(data)
                 
-                file_name2 = 'Data/' + str(nb) + 'covered_distance_over_L.csv';
+                file_name2 = 'Data/' + str(nb) + 'covered_distance_over_L.csv'
                 if (self.covered_dist_L_fname == ""):
                     self.covered_dist_L_fname = file_name2
                 with open(self.covered_dist_L_fname,'a+') as out:
@@ -203,7 +224,7 @@ class MainApplication(tk.Frame):
             if self.modify_length == False:
                 self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
         
-        self.gen_fitness = []
+        gen_fitness = []
         self.map.covered_dist = 0
         self.map.old_position = None
 

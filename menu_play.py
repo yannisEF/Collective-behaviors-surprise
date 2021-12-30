@@ -14,8 +14,9 @@ class PlayMenu(tk.Frame):
 
     scale_length_default = 25
     
-    def __init__(self, master):
+    def __init__(self, master, application):
         super().__init__(master)
+        self.application = application
 
         self.frame_run = tk.Frame(self)
         self.frame_separation = tk.Frame(self, **self.frame_separation_parameters)
@@ -46,25 +47,25 @@ class PlayMenu(tk.Frame):
         Pauses/Runs the selected genome
         """
 
-        self.master.is_paused = not(self.master.is_paused)
+        self.application.is_paused = not(self.application.is_paused)
 
     def reset_simulation(self):
         """
         Resets the simulation
         """
 
-        self.master.canvas.delete('all')
-        self.master.map.reset()
+        self.application.canvas.delete('all')
+        self.application.map.reset()
 
-        for genome in self.master.genomes:
+        for genome in self.application.genomes:
             genome.fitness = 0
             
-        self.master._make_frame()
+        self.application._make_frame()
     
     def modify_ring_length(self):
         """
         Changes the map's length
         """
 
-        self.master.map.ring_length = self.scale_length.get()
+        self.application.map.ring_length = self.scale_length.get()
         self.reset_simulation()

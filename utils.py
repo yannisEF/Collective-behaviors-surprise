@@ -67,6 +67,10 @@ def check_selected(func):
     return inner
 
 
+def get_time_stamp():
+    return datetime.datetime.now().strftime("%Y%m%d_%H%M")
+
+
 def read_csv_files(filenames, title="unnamed graph", xLabel="unnamed x-axis", yLabel="unnamed y-axis"):
     """
     Plots boxplots from a list of csv files
@@ -110,7 +114,7 @@ def read_csv_files(filenames, title="unnamed graph", xLabel="unnamed x-axis", yL
     plt.xlabel(xLabel)
     plt.ylabel(yLabel)
 
-    plt.title(title if title not in ["", "unnamed graph"] else datetime.datetime.now().strftime("%Y%m%d_%H%M"))
+    plt.title(title if title not in ["", "unnamed graph"] else get_time_stamp())
 
     # Display
     plt.show()

@@ -18,9 +18,6 @@ class Ring(Map):
         self.name = "Ring map"
         self.ring_length = ring_length
         self.resolution = resolution
-        self.covered_dist = 0
-        self.old_position = None
-        self.t = ring_length/2*0.1
 
     def _init_agent_position(self, new_agent:Agent):
         """
@@ -36,17 +33,14 @@ class Ring(Map):
         Moves an agent on the map, adds noise to the new position
         Returns its position
         """
+        
+        position_shift = agent.direction * agent.speed
+        position_shift += agent.noise * (2 * random.random() - 1)
 
-        new_position = agent.position + agent.direction * agent.speed
-        new_position += agent.noise * (2 * random.random() - 1)
+        new_position = agent.position + position_shift
         
         if self.resolution is not None:
             new_position = new_position - new_position % self.resolution
-        
-        if self.old_position is not None:
-            self.covered_dist += (new_position - self.old_position)
-            
-        self.old_position = new_position
         
         return new_position % self.ring_length
     
