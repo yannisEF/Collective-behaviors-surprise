@@ -48,6 +48,7 @@ class Agent:
 
         self.score = 0
         self.distance_traveled = 0
+        self.position_history = []
 
     def reset_sensors(self) -> None:
         """

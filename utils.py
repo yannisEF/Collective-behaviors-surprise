@@ -83,8 +83,7 @@ def read_csv_files(filenames, title="unnamed graph", xLabel="unnamed x-axis", yL
         
         list_lines.append([list(map(float, line.split(","))) for line in rawlines if len(line) != 0 and line[0] != "#"])
     
- 
-    # compile data from multiple files and display boxplots
+    # Compile data from multiple files and display boxplots
     if any([len(list_lines[0]) != len(lines) for lines in list_lines]):
         raise ValueError("All data files must have the same amount of data.")
     

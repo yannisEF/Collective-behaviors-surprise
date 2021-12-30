@@ -11,9 +11,11 @@ class Genome:
 
     id = 0
 
-    def __init__(self, action_network=None, prediction_network=None, nb_runs_per_evaluation=10, elitism=1, mutation_rate=0.05) -> None:
+    def __init__(self, name="Genome", action_network=None, prediction_network=None, nb_runs_per_evaluation=10, elitism=1, mutation_rate=0.05) -> None:
         self.id = Genome.id
         Genome.id += 1
+
+        self.name = name
         
         self.nb_runs_per_evaluation = 10
         self.elitism = 1

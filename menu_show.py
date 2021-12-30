@@ -13,6 +13,7 @@ class ShowMenu(tk.Frame):
     A side-menu that allows the user to visualize relevant data about the simulation
     """
     
+    frame_separation_parameters = {"height":40}
     frame_general_parameters = {"borderwidth":3, "relief":"sunken"}
     listbox_parameters = {"width":40, "height":10}
     button_parameters_csv = {"width":8, "height":1}
@@ -44,6 +45,8 @@ class ShowMenu(tk.Frame):
         for s in os.listdir("Data"):
             self.listbox_files.insert('end', s[:-4])
         
+        frame_separation = tk.Frame(self, **self.frame_separation_parameters)
+        
         # Button to show the position history of the agents over a run
         self.frame_other_buttons = tk.Frame(self, **self.frame_general_parameters)
         self.label_other_buttons = tk.Label(self.frame_other_buttons, text="Other")
@@ -53,9 +56,10 @@ class ShowMenu(tk.Frame):
         self.label_other_buttons.grid(row=1, column=1)
         self.button_show_history.grid(row=2, column=1)
         
-        self.frame_select_csv.grid(row=1, column=1)
         self.frame_other_buttons.grid(row=1, column=1)
-
+        frame_separation.grid(row=2, column=1)
+        self.frame_select_csv.grid(row=3, column=1)
+        
     def load_csv(self):
         """
         Adds a csv file to the list of csv files

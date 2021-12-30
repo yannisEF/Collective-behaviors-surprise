@@ -21,14 +21,15 @@ class GenomeMenu(tk.Frame):
         # Frame to select genomes
         self.frame_select_genomes = tk.Frame(self, **self.frame_general_parameters)
         self.label_genomes = tk.Label(self.frame_select_genomes, text="Genomes selection")
+        self.button_random_genome = tk.Button(self.frame_select_genomes, text="Generate", command=self.add_genome, **self.button_parameters)
 
-        self.listbox_genomes = tk.Listbox(self.frame_select_genomes, selectmode='single', **GenomeMenu.listbox_parameters)
+        self.listbox_genomes = tk.Listbox(self.frame_select_genomes, selectmode='single', **self.listbox_parameters)
 
         self.frame_select_genomes_buttons = tk.Frame(self.frame_select_genomes)
-        self.button_show_genome = tk.Button(self.frame_select_genomes_buttons, text="Show Genome", command=self.show_genome, **GenomeMenu.button_parameters)
-        self.button_delete_genome = tk.Button(self.frame_select_genomes_buttons, text="Delete", command=self.delete_genome, **GenomeMenu.button_parameters)
-        self.button_save_genome = tk.Button(self.frame_select_genomes_buttons, text="Save Genome", command=self.save_genome, **GenomeMenu.button_parameters)
-        self.button_load_genome = tk.Button(self.frame_select_genomes_buttons, text="Load Genome", command=self.load_genome, **GenomeMenu.button_parameters)
+        self.button_show_genome = tk.Button(self.frame_select_genomes_buttons, text="Show Genome", command=self.show_genome, **self.button_parameters)
+        self.button_delete_genome = tk.Button(self.frame_select_genomes_buttons, text="Delete", command=self.delete_genome, **self.button_parameters)
+        self.button_save_genome = tk.Button(self.frame_select_genomes_buttons, text="Save Genome", command=self.save_genome, **self.button_parameters)
+        self.button_load_genome = tk.Button(self.frame_select_genomes_buttons, text="Load Genome", command=self.load_genome, **self.button_parameters)
 
         self.button_show_genome.grid(row=1, column=1)
         self.button_delete_genome.grid(row=2, column=1)
@@ -36,9 +37,11 @@ class GenomeMenu(tk.Frame):
         self.button_load_genome.grid(row=2, column=2)
 
         self.label_genomes.grid(row=1, column=1)
-        self.listbox_genomes.grid(row=2, column=1)
-        self.frame_select_genomes_buttons.grid(row=3, column=1)
+        self.button_random_genome.grid(row=1, column=2)
+        self.listbox_genomes.grid(row=2, column=1, columnspan=2)
+        self.frame_select_genomes_buttons.grid(row=3, column=1, columnspan=2)
 
+        self.button_random_genome["width"] //= 2
         self.button_delete_genome["width"] //= 2
 
         for gen in self.application.genomes:
@@ -52,10 +55,15 @@ class GenomeMenu(tk.Frame):
         self.frame_evolve = tk.Frame(self, **self.frame_general_parameters)
 
         self.frame_evolve_buttons = tk.Frame(self.frame_evolve)
-        self.button_start_evolve = tk.Button(self.frame_evolve_buttons, text="Evolve genomes", command=self.start_evolution, **GenomeMenu.button_parameters)
-        self.button_modify_ring_length = tk.Checkbutton(self.frame_evolve_buttons, text="Evolve over Length", command=self.set_modify_ring_length, **GenomeMenu.button_parameters)
+        self.button_start_evolve = tk.Button(self.frame_evolve_buttons, text="Evolve genomes", command=self.start_evolution, **self.button_parameters)
 
-        self.button_modify_ring_length.grid(row=1, column=1)
+        #   Checkbutton to iterate the evolution process over all lengths
+        self.check_modify_ring_length = tk.BooleanVar()
+        self.check_modify_ring_length.set(False)
+
+        self.checkbutton_modify_ring_length = tk.Checkbutton(self.frame_evolve_buttons, text="Evolve over Length", var=self.check_modify_ring_length, **self.button_parameters)
+
+        self.checkbutton_modify_ring_length.grid(row=1, column=1)
         self.button_start_evolve.grid(row=2, column=1)
 
         self.frame_evolve_buttons.grid(row=1, column=1)
@@ -128,16 +136,20 @@ class GenomeMenu(tk.Frame):
         except tk.TclError:
             pass
     
-    def add_genome(self, parameters={}, name=""):
+    def add_genome(self, parameters={}, name=None):
         """
         Adds a genome with given parameters
         """
 
-        new_genome = self.application._load_genome(**parameters)
-        self.listbox_genomes.insert("end", "{} {}".format("Genome" if len(name) == 0 else name, new_genome.id+1))
+        new_genome = self.application._load_genome(name=name, **parameters)
+        self.listbox_genomes.insert("end", "{} {}".format(new_genome.name, new_genome.id+1))
 
-        if len(self.application.genomes) == 1:
-            self.application.map.genome_to_show = new_genome.id
+        self.listbox_genomes.selection_clear(0, tk.END)
+        self.listbox_genomes.selection_set(tk.END)
+        self.listbox_genomes.see("end")
+
+        self.application.map.genome_to_show = new_genome.id
+        self.application._make_frame()
 
     def load_genome(self):
         """
@@ -150,16 +162,6 @@ class GenomeMenu(tk.Frame):
             return
 
         self.add_genome(parameters=loaded_content, name=loaded_name)
-    
-    def set_modify_ring_length(self):
-        """
-        Evolves the population over different ring lengths if checked
-        """
-
-        if (self.application.modify_length == False):
-            self.application.modify_length = True
-        else:
-            self.application.modify_length = False
 
     def start_evolution(self):
         """

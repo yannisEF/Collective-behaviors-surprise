@@ -11,6 +11,7 @@ class PlayMenu(tk.Frame):
     scale_speed_parameters = {"from_":1, "to":10}
     scale_length_parameters = {"from_":5, "to":50, "resolution":5}
     frame_separation_parameters = {"width":80, "height":0}
+    frame_general_parameters = {"borderwidth":3, "relief":"sunken"}
 
     scale_length_default = 25
     
@@ -18,14 +19,15 @@ class PlayMenu(tk.Frame):
         super().__init__(master)
         self.application = application
 
-        self.frame_run = tk.Frame(self)
+        self.frame_run = tk.Frame(self, **self.frame_general_parameters)
         self.frame_separation = tk.Frame(self, **self.frame_separation_parameters)
-        self.frame_length = tk.Frame(self)
+        self.frame_length = tk.Frame(self, **self.frame_general_parameters)
         
         self.button_play = tk.Button(self.frame_run, text="Play/Pause", command=self.change_pause)
         self.scale_speed = tk.Scale(self.frame_run, orient=tk.HORIZONTAL, label="Simulation speed", **self.scale_speed_parameters)
         self.button_reset = tk.Button(self.frame_run, text="Reset", command=self.reset_simulation)
 
+        self.list_lengths = list(range(self.scale_length_parameters["from_"], self.scale_length_parameters["to"]+1, self.scale_length_parameters["resolution"]))
         self.scale_length = tk.Scale(self.frame_length, orient=tk.HORIZONTAL, label="Ring length", **self.scale_length_parameters)
         self.button_modify_length = tk.Button(self.frame_length, text="Modify", command=self.modify_ring_length)
         
