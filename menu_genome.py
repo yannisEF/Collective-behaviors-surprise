@@ -154,6 +154,8 @@ class GenomeMenu(tk.Frame):
         self.application.map.genome_to_show = new_genome.id
         self.application._make_frame()
 
+        return new_genome
+
     def load_genome(self):
         """
         Loads a genome and adds it to the application
@@ -173,32 +175,61 @@ class GenomeMenu(tk.Frame):
 
         try:
             self.selection = self.get_selection()
-            entries = {"nb_runs":"Number of different runs (default 200)", "output_prefix":"Name prefix of the csv files as output (default is current timestamp)"}
+            entries = {"output_prefix":"Name prefix of the output (default is timestamp)", "nb_runs":"Number of runs (default 200)", "max_generations":"Maximum number of generations (default 30)"}
             AskMenu(tk.Toplevel(self), function=self.start_evolution, entries=entries)
         except:
             print("Please add a genome to the application and select it.")
             pass
     
-    def average_evolution(self, nb_runs, genome_to_evolve):
+    def iterate_evolution(self, nb_runs, max_generations, genome_to_evolve):
         """
-        Returns the fitness over the generations, and the average scores of the evolution process over the desired number of runs
+        Returns the fitness over the generations, and the scores of the evolution process through the desired number of runs
         """
 
         conc_gen_fitness = []
-        avg_fitness, avg_distance, avg_entropy, avg_ratio = 0, 0, 0, 0
+        conc_fitness, conc_distance, conc_entropy, conc_ratio = [], [], [], []
         for _ in range(nb_runs):
+            print("Run {}/{}".format(_, nb_runs))
             self.application.play_menu.reset_simulation()
-            gen_fitness, covered_distance, entropy, cluster_ratio = self.application.evolve(genome_to_evolve=genome_to_evolve)
+            gen_fitness, covered_distance, entropy, cluster_ratio = self.application.evolve(max_generations=max_generations, genome_to_evolve=genome_to_evolve)
 
             conc_gen_fitness.append(gen_fitness)
-            avg_fitness += np.max(gen_fitness)
-            avg_distance += covered_distance
-            avg_entropy += entropy
-            avg_ratio += cluster_ratio
+            conc_fitness.append(np.max(gen_fitness))
+            conc_distance.append(covered_distance)
+            conc_entropy.append(entropy)
+            conc_ratio.append(cluster_ratio)
         
-        return tuple([conc_gen_fitness]) + tuple(map(lambda x: x / nb_runs), [avg_fitness, avg_distance, avg_entropy, avg_ratio])
+        return conc_gen_fitness, conc_fitness, conc_distance, conc_entropy, conc_ratio
 
-    def start_evolution(self, nb_runs, output_prefix):
+    def write_evolution(self, path, output_prefix, length, is_iterated, conc_gen_fitness, conc_fitness, conc_distance, conc_entropy, conc_ratio):
+        """
+        Writes the evolution process' results in separate files with given prefix
+        """
+
+        iterated = "all" if is_iterated is True else length
+
+        with open(path.format(output_prefix, "gen_fitness", length), 'a+') as f:
+            for gen_fitness in conc_gen_fitness:
+                for step, fit in enumerate(gen_fitness):
+                    csv.writer(f).writerow((step, fit))
+
+        with open(path.format(output_prefix, "fitness", iterated), 'a+') as f:
+            for fitness in conc_fitness:
+                csv.writer(f).writerow((length, fitness))
+
+        with open(path.format(output_prefix, "distance", iterated), 'a+') as f:
+            for distance in conc_distance:
+                csv.writer(f).writerow((length, distance))
+
+        with open(path.format(output_prefix, "entropy", iterated), 'a+') as f:
+            for entropy in conc_entropy:
+                csv.writer(f).writerow((length, entropy))
+        
+        with open(path.format(output_prefix, "ratio", iterated), 'a+') as f:
+            for ratio in conc_ratio:
+                csv.writer(f).writerow((length, ratio))
+
+    def start_evolution(self, output_prefix, nb_runs, max_generations):
         """
         Starts the evolution process
         """
@@ -210,20 +241,30 @@ class GenomeMenu(tk.Frame):
         except ValueError:
             nb_runs =  self.application.default_number_runs
             print("Invalid number, setting number of runs to its default value of {}".format(nb_runs))
+
+        try:
+            max_generations = int(max_generations)
+            if max_generations <= 0:
+                raise ValueError
+        except ValueError:
+            max_generations =  self.application.default_max_generations
+            print("Invalid number, setting number of generations to its default value of {}".format(max_generations))
+        
+        if output_prefix == "":
+            output_prefix = get_time_stamp()
+
+        path = "Data/{}_{}_L={}.csv" # prefix, type, mapsize
         
         genome_to_evolve = self.application.id_to_genome[self.selection-1]
 
         if self.check_modify_ring_length == True:
             for length in self.application.play_menu.list_lengths:
                 self.application.map.ring_length = length
-
-                conc_gen_fitness, avg_fitness, avg_distance, avg_entropy, avg_ratio = self.average_evolution(nb_runs, genome_to_evolve)
-                # WRITE IN FILE
+                self.write_evolution(path, output_prefix, length, True, *self.iterate_evolution(nb_runs, max_generations, genome_to_evolve))
         else:
-            conc_gen_fitness, avg_fitness, avg_distance, avg_entropy, avg_ratio = self.average_evolution(nb_runs, genome_to_evolve)
+            self.write_evolution(path, output_prefix, self.application.map.ring_length, False, *self.iterate_evolution(nb_runs, max_generations, genome_to_evolve))
 
-            # WRITE IN FILE
-
+        
         # if self.modify_length is True:
         #     if i == max_iteration:
         #         file_name = 'Data/' + str(nb) + 'fitness_over_L.csv'

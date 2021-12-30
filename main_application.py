@@ -30,6 +30,7 @@ class MainApplication(tk.Frame):
 
     base_speed = int(1000 / 60)
     default_number_runs = 200
+    default_max_generations = 30
     default_history_length = 500
     
     def __init__(self, master, ring_length=25, simulation_speed=1, length_fitness=100, nb_run_fitness=1, nb_genomes=1, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
@@ -93,6 +94,7 @@ class MainApplication(tk.Frame):
             self.is_paused = True
             result = function(self, *args, **kwargs)
             self.is_paused = False
+            return result
         return inner
 
     def _load_genome(self, action_network=None, prediction_network=None, new_genome=None, name=None):
@@ -196,7 +198,7 @@ class MainApplication(tk.Frame):
 
         cluster_sizes = [1]
         for i, agent in enumerate(agents):
-            if abs(agent.position - agents[(i+1)%len(agents)]) <= agent.sensor_range_1:
+            if abs(agent.position - agents[(i+1)%len(agents)].position) <= agent.sensor_range_1:
                 if i+1 != len(agents):
                     cluster_sizes[-1] += 1
                 else:
@@ -208,14 +210,14 @@ class MainApplication(tk.Frame):
         return max(cluster_sizes) / len(agents)
         
     @_pause_during_execution
-    def evolve(self, genome_to_evolve, replace_population=True, max_iteration=30):
+    def evolve(self, max_generations, genome_to_evolve, replace_population=True):
         """
         Evolves the population of genomes
         Returns the best fitness over generations, covered distance, entropy and cluster ratio of the last generation
         """
 
         # Progress bar
-        bar = Bar("Evolving {} {} over {} iterations with a map size of {}".format(genome_to_evolve.name, genome_to_evolve.id+1, max_iteration, self.map.ring_length), max=max_iteration)
+        bar = Bar("Evolving {} {} over {} iterations with a map size of {}".format(genome_to_evolve.name, genome_to_evolve.id+1, max_generations, self.map.ring_length), max=max_generations)
         print("Starting evolution process..", end='\r')
 
         # CMA-ES
@@ -227,7 +229,7 @@ class MainApplication(tk.Frame):
 
         # MAYBE ISSUE HERE OF IGNORING LAST STEP
         i = 0
-        while not es.stop() and i < max_iteration:
+        while not es.stop() and i < max_generations:
             solutions = es.ask()
             fitness = [self._compute_genome_fitness(gen) for gen in solutions]
             es.tell(solutions, [-fit for fit in fitness]) # minimization so take opposite of fitness
@@ -241,25 +243,34 @@ class MainApplication(tk.Frame):
             for gen in self.genomes:
                 self.genome_menu.delete_genome(gen.id)
         
-        # Adding the generated genomes to the menu
+        # Progress bar
+        print()
+        bar = Bar("Evaluating generated solutions", max=len(solutions))
+        print("Starting evaluation of generated solutions..", end='\r')
+
+        # Adding the generated genomes to the menu and computing the average of the scores over the population
+        covered_distance, entropy, cluster_ratio = 0, 0, 0
         action_network, prediction_network = ActionNetwork(), PredictionNetwork()
         for gen_tensor in solutions:
             action_network.from_tensor(torch.Tensor(gen_tensor[:action_network.total_size]))
             prediction_network.from_tensor(torch.Tensor(gen_tensor[action_network.total_size:]))
             
-            self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
-        
-        # Averaging the scores of the population of genomes
-        covered_distance, entropy, cluster_ratio = 0, 0, 0
-        for genome in solutions:
+            genome = self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
+
+            # Running the genome to compute the scores
+            self.map.reset(genome_to_reset=genome.id)
+            self.map.run(length=self.default_history_length, genome_to_run=genome.id)
+
             covered_distance += self._compute_covered_distance(genome)
             entropy += self._compute_entropy(genome)
             cluster_ratio += self._compute_largest_cluster_ratio(genome)
-        
-        return gen_fitness, covered_distance / len(genome), entropy / len(genome), cluster_ratio / len(genome)
+
+            bar.next()
+
+        return gen_fitness, covered_distance / len(solutions), entropy / len(solutions), cluster_ratio / len(solutions)
 
         # if self.modify_length is True:
-        #     if i == max_iteration:
+        #     if i == max_generations:
         #         file_name = 'Data/' + str(nb) + 'fitness_over_L.csv'
         #         if (self.fitness_L_fname == ""):
         #             self.fitness_L_fname = file_name
