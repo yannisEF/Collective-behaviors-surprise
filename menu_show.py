@@ -1,8 +1,6 @@
 import os
-import warnings
 import tkinter as tk
 import matplotlib.pyplot as plt
-import progress
 
 from utils import *
 from menu_ask import AskMenu
@@ -88,47 +86,46 @@ class ShowMenu(tk.Frame):
         Show the plot of the history over one run of given length
         """
 
-        try:
-            plt.title(title)
-            plt.xlabel("Time")
-            plt.ylabel("Position")
+        plt.title(title)
+        plt.xlabel("Time")
+        plt.ylabel("Position")
 
+        try:
             length = int(length)
             if length <= 0:
-                warnings.warn("Length of simulated run should be higher than 0. Putting it to default value 500.")
-                length = 500
-
-            self.application.map.reset()
-
-            genome_selected = self.application.id_to_genome[self.selection]
-
-            self.application.is_paused = True
-            self.application.map.run(length=length, genome_to_run=genome_selected.id, progress_bar=True)
-
-            # Plotting one line for each agent
-            for agent in genome_selected.agents.values():
-                # Cutting the history into continuous lines for prettier output
-                cut_history = []
-
-                last_pos = -1e9
-                for position in agent.position_history:
-                    if abs(position - last_pos) > 2 * agent.speed:
-                        cut_history.append([])
-                    
-                    cut_history[-1].append(position)
-                    last_pos = position
-
-                cum_cut_length = 0
-                for history in cut_history:
-                    plt.plot(list(range(cum_cut_length, cum_cut_length+len(history))), history, **self.history_parameters)
-                    cum_cut_length += len(history) - 1
-                    
-            self.application.is_paused = False
-            plt.show()
-            
+                raise ValueError
         except ValueError:
-            print("Please enter a number.")
-            pass
+            length = 500
+            print("Invalid number, setting the length to its default value of {}".format(self.application.default_history_length))
+            
+
+        self.application.map.reset()
+
+        genome_selected = self.application.id_to_genome[self.selection]
+
+        self.application.is_paused = True
+        self.application.map.run(length=length, genome_to_run=genome_selected.id, progress_bar=True)
+
+        # Plotting one line for each agent
+        for agent in genome_selected.agents.values():
+            # Cutting the history into continuous lines for prettier output
+            cut_history = []
+
+            last_pos = -1e9
+            for position in agent.position_history:
+                if abs(position - last_pos) > 2 * agent.speed:
+                    cut_history.append([])
+                
+                cut_history[-1].append(position)
+                last_pos = position
+
+            cum_cut_length = 0
+            for history in cut_history:
+                plt.plot(list(range(cum_cut_length, cum_cut_length+len(history))), history, **self.history_parameters)
+                cum_cut_length += len(history) - 1
+                
+        self.application.is_paused = False
+        plt.show()
    
     def ask_boxplots_names(self):
         """

@@ -1,7 +1,10 @@
 import os
+import csv
+import numpy as np
 import tkinter as tk
 
 from utils import *
+from menu_ask import AskMenu
 
 
 class GenomeMenu(tk.Frame):
@@ -55,7 +58,7 @@ class GenomeMenu(tk.Frame):
         self.frame_evolve = tk.Frame(self, **self.frame_general_parameters)
 
         self.frame_evolve_buttons = tk.Frame(self.frame_evolve)
-        self.button_start_evolve = tk.Button(self.frame_evolve_buttons, text="Evolve genomes", command=self.start_evolution, **self.button_parameters)
+        self.button_start_evolve = tk.Button(self.frame_evolve_buttons, text="Evolve genomes", command=self.ask_evolution, **self.button_parameters)
 
         #   Checkbutton to iterate the evolution process over all lengths
         self.check_modify_ring_length = tk.BooleanVar()
@@ -163,19 +166,89 @@ class GenomeMenu(tk.Frame):
 
         self.add_genome(parameters=loaded_content, name=loaded_name)
 
-    def start_evolution(self):
+    def ask_evolution(self):
+        """
+        Lets the user choose the evolution process' parameters
+        """
+
+        try:
+            self.selection = self.get_selection()
+            entries = {"nb_runs":"Number of different runs (default 200)", "output_prefix":"Name prefix of the csv files as output (default is current timestamp)"}
+            AskMenu(tk.Toplevel(self), function=self.start_evolution, entries=entries)
+        except:
+            print("Please add a genome to the application and select it.")
+            pass
+    
+    def average_evolution(self, nb_runs, genome_to_evolve):
+        """
+        Returns the fitness over the generations, and the average scores of the evolution process over the desired number of runs
+        """
+
+        conc_gen_fitness = []
+        avg_fitness, avg_distance, avg_entropy, avg_ratio = 0, 0, 0, 0
+        for _ in range(nb_runs):
+            self.application.play_menu.reset_simulation()
+            gen_fitness, covered_distance, entropy, cluster_ratio = self.application.evolve(genome_to_evolve=genome_to_evolve)
+
+            conc_gen_fitness.append(gen_fitness)
+            avg_fitness += np.max(gen_fitness)
+            avg_distance += covered_distance
+            avg_entropy += entropy
+            avg_ratio += cluster_ratio
+        
+        return tuple([conc_gen_fitness]) + tuple(map(lambda x: x / nb_runs), [avg_fitness, avg_distance, avg_entropy, avg_ratio])
+
+    def start_evolution(self, nb_runs, output_prefix):
         """
         Starts the evolution process
         """
-        if (self.application.modify_length == True):
-            for k in range (5, 16, 5): #5, 10, 15 only (temporary)
-                self.application.map.ring_length = k
-                self.application.play_menu.reset_simulation()
-                self.application.genomes = []
-                self.application.is_paused = True
-                self.application.evolve(genome_to_evolve=self.application.id_to_genome[0])
-            self.application.modify_length = False
-            self.application.f_name = ""
-            self.application.is_paused = False
+
+        try:
+            nb_runs = int(nb_runs)
+            if nb_runs <= 0:
+                raise ValueError
+        except ValueError:
+            nb_runs =  self.application.default_number_runs
+            print("Invalid number, setting number of runs to its default value of {}".format(nb_runs))
+        
+        genome_to_evolve = self.application.id_to_genome[self.selection-1]
+
+        if self.check_modify_ring_length == True:
+            for length in self.application.play_menu.list_lengths:
+                self.application.map.ring_length = length
+
+                conc_gen_fitness, avg_fitness, avg_distance, avg_entropy, avg_ratio = self.average_evolution(nb_runs, genome_to_evolve)
+                # WRITE IN FILE
         else:
-            self.application.evolve(genome_to_evolve=self.application.id_to_genome[self.get_selection()-1])
+            conc_gen_fitness, avg_fitness, avg_distance, avg_entropy, avg_ratio = self.average_evolution(nb_runs, genome_to_evolve)
+
+            # WRITE IN FILE
+
+        # if self.modify_length is True:
+        #     if i == max_iteration:
+        #         file_name = 'Data/' + str(nb) + 'fitness_over_L.csv'
+        #         if (self.fitness_L_fname == ""):
+        #             self.fitness_L_fname = file_name
+        #         with open(self.fitness_L_fname,'a+') as out:
+        #             csv_out = csv.writer(out)
+        #             last_elem = gen_fitness[-1]
+        #             data = (self.map.ring_length, last_elem[1])
+        #             csv_out.writerow(data)
+                
+        #         file_name2 = 'Data/' + str(nb) + 'covered_distance_over_L.csv'
+        #         if (self.covered_dist_L_fname == ""):
+        #             self.covered_dist_L_fname = file_name2
+        #         with open(self.covered_dist_L_fname,'a+') as out:
+        #             csv_out = csv.writer(out)
+        #             #np.log(self.map.covered_dist/(self.nb_agents*self.map.t)) or np.log(self.map.covered_dist/self.nb_agents)
+        #             data = (self.map.ring_length, np.log(self.map.covered_dist/(self.nb_agents*self.map.t))) 
+        #             csv_out.writerow(data)
+        
+        
+        # if self.genome_menu.check_modify_ring_length != True:
+        #     # Saving the results in a csv file
+        #     filename = 'Data/' + get_time_stamp() + 'best_fitness_L=' + str(self.map.ring_length) + '.csv'
+        #     with open(filename,'w+') as out:
+        #         csv_out = csv.writer(out)
+        #         for i, row in enumerate(gen_fitness):
+        #             csv_out.writerow((i,row))

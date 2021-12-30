@@ -29,6 +29,8 @@ class MainApplication(tk.Frame):
     agent_parameters = {"size":12, "color":"lightgreen"}
 
     base_speed = int(1000 / 60)
+    default_number_runs = 200
+    default_history_length = 500
     
     def __init__(self, master, ring_length=25, simulation_speed=1, length_fitness=100, nb_run_fitness=1, nb_genomes=1, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
         super().__init__(master)
@@ -206,19 +208,11 @@ class MainApplication(tk.Frame):
         return max(cluster_sizes) / len(agents)
         
     @_pause_during_execution
-    def evolve(self, genome_to_evolve, replace_population=True, max_iteration=30, current_step=0):
+    def evolve(self, genome_to_evolve, replace_population=True, max_iteration=30):
         """
-        Evolves the population of genomes, called recursively if iterating over all map-sizes
-        Returns the best fitness, covered distance, entropy and cluster ratio of the last generation
+        Evolves the population of genomes
+        Returns the best fitness over generations, covered distance, entropy and cluster ratio of the last generation
         """
-
-        # Recursive check
-        if (self.genome_menu.check_modify_ring_length == True) and (current_step == len(self.play_menu.list_lengths)):
-            return 0, 0, 0, 0
-
-        # Change the map properties
-        self.map.ring_length = self.play_menu.list_lengths[current_step]
-        self.map.reset()
 
         # Progress bar
         bar = Bar("Evolving {} {} over {} iterations with a map size of {}".format(genome_to_evolve.name, genome_to_evolve.id+1, max_iteration, self.map.ring_length), max=max_iteration)
@@ -231,19 +225,39 @@ class MainApplication(tk.Frame):
         # Data to register
         gen_fitness = []
 
+        # MAYBE ISSUE HERE OF IGNORING LAST STEP
         i = 0
         while not es.stop() and i < max_iteration:
             solutions = es.ask()
             fitness = [self._compute_genome_fitness(gen) for gen in solutions]
-
             es.tell(solutions, [-fit for fit in fitness]) # minimization so take opposite of fitness
-            
-            best_fit = np.max(fitness)
-            gen_fitness.append(best_fit)
+
+            gen_fitness.append(np.max(fitness))
 
             bar.next()
             i += 1
+
+        if replace_population is True:
+            for gen in self.genomes:
+                self.genome_menu.delete_genome(gen.id)
         
+        # Adding the generated genomes to the menu
+        action_network, prediction_network = ActionNetwork(), PredictionNetwork()
+        for gen_tensor in solutions:
+            action_network.from_tensor(torch.Tensor(gen_tensor[:action_network.total_size]))
+            prediction_network.from_tensor(torch.Tensor(gen_tensor[action_network.total_size:]))
+            
+            self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
+        
+        # Averaging the scores of the population of genomes
+        covered_distance, entropy, cluster_ratio = 0, 0, 0
+        for genome in solutions:
+            covered_distance += self._compute_covered_distance(genome)
+            entropy += self._compute_entropy(genome)
+            cluster_ratio += self._compute_largest_cluster_ratio(genome)
+        
+        return gen_fitness, covered_distance / len(genome), entropy / len(genome), cluster_ratio / len(genome)
+
         # if self.modify_length is True:
         #     if i == max_iteration:
         #         file_name = 'Data/' + str(nb) + 'fitness_over_L.csv'
@@ -265,32 +279,14 @@ class MainApplication(tk.Frame):
         #             csv_out.writerow(data)
         
         
-        if self.genome_menu.check_modify_ring_length != True:
-            # Saving the results in a csv file
-            filename = 'Data/' + get_time_stamp() + 'best_fitness_L=' + str(self.map.ring_length) + '.csv'
-            with open(filename,'w+') as out:
-                csv_out = csv.writer(out)
-                for i, row in enumerate(gen_fitness):
-                    csv_out.writerow((i,row))
+        # if self.genome_menu.check_modify_ring_length != True:
+        #     # Saving the results in a csv file
+        #     filename = 'Data/' + get_time_stamp() + 'best_fitness_L=' + str(self.map.ring_length) + '.csv'
+        #     with open(filename,'w+') as out:
+        #         csv_out = csv.writer(out)
+        #         for i, row in enumerate(gen_fitness):
+        #             csv_out.writerow((i,row))
 
-            if replace_population is True:
-                for gen in self.genomes:
-                    self.genome_menu.delete_genome(gen.id)
-            
-            # Adding the generated genomes to the menu
-            action_network, prediction_network = ActionNetwork(), PredictionNetwork()
-            for gen_tensor in solutions:
-                action_network.from_tensor(torch.Tensor(gen_tensor[:action_network.total_size]))
-                prediction_network.from_tensor(torch.Tensor(gen_tensor[action_network.total_size:]))
-                
-                self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
-        
-        best_fit = best_fit # Already computed
-        # for genome in solutions:
-        #     covered_distance.append(self._compute_covered_distance(genome))
-        #     entropy 
-
-        return gen_fitness[-1],
 
     def run(self):
         """
