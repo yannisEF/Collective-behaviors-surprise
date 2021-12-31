@@ -44,7 +44,7 @@ class PlayMenu(tk.Frame):
 
         self.scale_length.set(25)
 
-    def change_pause(self):
+    def change_pause(self, event=None):
         """
         Pauses/Runs the selected genome
         """

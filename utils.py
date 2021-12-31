@@ -71,37 +71,33 @@ def get_time_stamp():
     return datetime.datetime.now().strftime("%Y%m%d_%H%M")
 
 
-def read_csv_files(filenames, title="unnamed graph", xLabel="unnamed x-axis", yLabel="unnamed y-axis"):
+def read_csv_files(filename, offset=-1, title="unnamed graph", xLabel="unnamed x-axis", yLabel="unnamed y-axis"):
     """
     Plots boxplots from a list of csv files
     """
 
-    list_lines = []
-    for filename in filenames:
-        with open(filename, 'r') as f:
-            rawlines = [line.replace("\n", "") for line in f.readlines()]
-        
-        list_lines.append([list(map(float, line.split(","))) for line in rawlines if len(line) != 0 and line[0] != "#"])
+    with open(filename, 'r') as f:
+        rawlines = [line.replace("\n", "") for line in f.readlines()]
     
-    # Compile data from multiple files and display boxplots
-    if any([len(list_lines[0]) != len(lines) for lines in list_lines]):
-        raise ValueError("All data files must have the same amount of data.")
+    lines = [tuple(map(float, line.split(","))) for line in rawlines if len(line) != 0 and line[0] != "#"]
     
     xData, yData = [], []
-    for i in range(len(list_lines[0])):
-        xData.append(list_lines[0][i][0])
-        yData.append([other_file[i][1] for other_file in list_lines])
+    for line in lines:
+        xData.append(line[0])
+        yData.append(line[1])
 
+    data = {}
+    for i in range(len(xData)):
+        if int(xData[i]) not in data:
+            data[int(xData[i])] = []
+
+        data[int(xData[i])].append(yData[i])
 
     # Create a figure instance
     fig, ax = plt.subplots(figsize=(9, 6))
 
     # plot data
-    if len(yData[0]) == 1:
-        ax.plot(xData, yData)
-    else:
-        ax.set_xticklabels(xData)
-        ax.boxplot(yData)
+    ax.boxplot(list(data.values()), positions=list(data.keys()))
 
     # Remove top axes and right axes ticks
     ax.get_xaxis().tick_bottom()

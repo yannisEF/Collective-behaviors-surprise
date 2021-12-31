@@ -65,6 +65,8 @@ class MainApplication(tk.Frame):
         bottom_menu = tk.Frame(self)
 
         self.play_menu = PlayMenu(bottom_menu, self)
+        self.master.bind('<space>', self.play_menu.change_pause)
+
         self.play_menu.grid(row=2, column=1)
         
         side_menu = tk.Frame(self)
@@ -267,37 +269,8 @@ class MainApplication(tk.Frame):
 
             bar.next()
 
+        print()
         return gen_fitness, covered_distance / len(solutions), entropy / len(solutions), cluster_ratio / len(solutions)
-
-        # if self.modify_length is True:
-        #     if i == max_generations:
-        #         file_name = 'Data/' + str(nb) + 'fitness_over_L.csv'
-        #         if (self.fitness_L_fname == ""):
-        #             self.fitness_L_fname = file_name
-        #         with open(self.fitness_L_fname,'a+') as out:
-        #             csv_out = csv.writer(out)
-        #             last_elem = gen_fitness[-1]
-        #             data = (self.map.ring_length, last_elem[1])
-        #             csv_out.writerow(data)
-                
-        #         file_name2 = 'Data/' + str(nb) + 'covered_distance_over_L.csv'
-        #         if (self.covered_dist_L_fname == ""):
-        #             self.covered_dist_L_fname = file_name2
-        #         with open(self.covered_dist_L_fname,'a+') as out:
-        #             csv_out = csv.writer(out)
-        #             #np.log(self.map.covered_dist/(self.nb_agents*self.map.t)) or np.log(self.map.covered_dist/self.nb_agents)
-        #             data = (self.map.ring_length, np.log(self.map.covered_dist/(self.nb_agents*self.map.t))) 
-        #             csv_out.writerow(data)
-        
-        
-        # if self.genome_menu.check_modify_ring_length != True:
-        #     # Saving the results in a csv file
-        #     filename = 'Data/' + get_time_stamp() + 'best_fitness_L=' + str(self.map.ring_length) + '.csv'
-        #     with open(filename,'w+') as out:
-        #         csv_out = csv.writer(out)
-        #         for i, row in enumerate(gen_fitness):
-        #             csv_out.writerow((i,row))
-
 
     def run(self):
         """

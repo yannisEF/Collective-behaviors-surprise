@@ -26,12 +26,13 @@ class ShowMenu(tk.Frame):
         self.frame_select_csv = tk.Frame(self, **self.frame_general_parameters)
         self.label_csv = tk.Label(self.frame_select_csv, text="CSV selection")
 
-        self.listbox_files = tk.Listbox(self.frame_select_csv, selectmode='multiple', **self.listbox_parameters)
+        self.listbox_files = tk.Listbox(self.frame_select_csv, selectmode='simple', **self.listbox_parameters)
+        self.listbox_files.bind('<Return>', self.ask_boxplots_names)
 
         self.frame_select_csv_buttons = tk.Frame(self.frame_select_csv)
         self.button_load_csv = tk.Button(self.frame_select_csv_buttons, text="Load csv", command=self.load_csv, **self.button_parameters_csv)
         self.button_show_boxplots = tk.Button(self.frame_select_csv_buttons, text="Show boxplots", command=self.ask_boxplots_names)
-       
+
         self.button_load_csv.grid(row=1, column=1)
         self.button_show_boxplots.grid(row=1, column=2)
 
@@ -40,7 +41,7 @@ class ShowMenu(tk.Frame):
         self.frame_select_csv_buttons.grid(row=3, column=1)
 
         # Filling the listbox
-        for s in os.listdir("Data"):
+        for s in os.listdir("Results"):
             self.listbox_files.insert('end', s[:-4])
         
         frame_separation = tk.Frame(self, **self.frame_separation_parameters)
@@ -73,13 +74,13 @@ class ShowMenu(tk.Frame):
         self.listbox_files.insert("end", name_to_load)
 
     @check_selected
-    def show_boxplots(self, path="Data", title="", xLabel="x", yLabel="y"):
+    def show_boxplots(self, path="Results", title="", xLabel="x", yLabel="y"):
         """
         Show the boxplot of the currently selected files
         """
 
-        list_of_files = ["{}/{}.csv".format(path, self.listbox_files.get(i)) for i in self.selection]
-        read_csv_files(list_of_files, title=title, xLabel=xLabel, yLabel=yLabel)
+        selected_file = "{}/{}.csv".format(path, self.listbox_files.get(self.selection))
+        read_csv_files(selected_file, title=title, xLabel=xLabel, yLabel=yLabel)
     
     def show_history(self, title="Position history", length=500):
         """
@@ -127,7 +128,7 @@ class ShowMenu(tk.Frame):
         self.application.is_paused = False
         plt.show()
    
-    def ask_boxplots_names(self):
+    def ask_boxplots_names(self, event=None):
         """
         Let the user enter the graph's labels and titles
         """

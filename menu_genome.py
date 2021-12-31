@@ -27,6 +27,7 @@ class GenomeMenu(tk.Frame):
         self.button_random_genome = tk.Button(self.frame_select_genomes, text="Generate", command=self.add_genome, **self.button_parameters)
 
         self.listbox_genomes = tk.Listbox(self.frame_select_genomes, selectmode='single', **self.listbox_parameters)
+        self.listbox_genomes.bind('<Return>', self.show_genome)
 
         self.frame_select_genomes_buttons = tk.Frame(self.frame_select_genomes)
         self.button_show_genome = tk.Button(self.frame_select_genomes_buttons, text="Show Genome", command=self.show_genome, **self.button_parameters)
@@ -84,7 +85,7 @@ class GenomeMenu(tk.Frame):
         index = self.listbox_genomes.curselection()
         return int(self.listbox_genomes.get(index).split()[-1])
     
-    def show_genome(self):
+    def show_genome(self, event=None):
         """
         Shows on the selected Genome on the application's canvas
         """
@@ -210,7 +211,9 @@ class GenomeMenu(tk.Frame):
 
         with open(path.format(output_prefix, "gen_fitness", length), 'a+') as f:
             for gen_fitness in conc_gen_fitness:
+                print(len(gen_fitness))
                 for step, fit in enumerate(gen_fitness):
+                    print(step, fit)
                     csv.writer(f).writerow((step, fit))
 
         with open(path.format(output_prefix, "fitness", iterated), 'a+') as f:
@@ -253,7 +256,7 @@ class GenomeMenu(tk.Frame):
         if output_prefix == "":
             output_prefix = get_time_stamp()
 
-        path = "Data/{}_{}_L={}.csv" # prefix, type, mapsize
+        path = "Results/{}_{}_L={}.csv" # prefix, type, mapsize
         
         genome_to_evolve = self.application.id_to_genome[self.selection-1]
 
@@ -263,33 +266,3 @@ class GenomeMenu(tk.Frame):
                 self.write_evolution(path, output_prefix, length, True, *self.iterate_evolution(nb_runs, max_generations, genome_to_evolve))
         else:
             self.write_evolution(path, output_prefix, self.application.map.ring_length, False, *self.iterate_evolution(nb_runs, max_generations, genome_to_evolve))
-
-        
-        # if self.modify_length is True:
-        #     if i == max_iteration:
-        #         file_name = 'Data/' + str(nb) + 'fitness_over_L.csv'
-        #         if (self.fitness_L_fname == ""):
-        #             self.fitness_L_fname = file_name
-        #         with open(self.fitness_L_fname,'a+') as out:
-        #             csv_out = csv.writer(out)
-        #             last_elem = gen_fitness[-1]
-        #             data = (self.map.ring_length, last_elem[1])
-        #             csv_out.writerow(data)
-                
-        #         file_name2 = 'Data/' + str(nb) + 'covered_distance_over_L.csv'
-        #         if (self.covered_dist_L_fname == ""):
-        #             self.covered_dist_L_fname = file_name2
-        #         with open(self.covered_dist_L_fname,'a+') as out:
-        #             csv_out = csv.writer(out)
-        #             #np.log(self.map.covered_dist/(self.nb_agents*self.map.t)) or np.log(self.map.covered_dist/self.nb_agents)
-        #             data = (self.map.ring_length, np.log(self.map.covered_dist/(self.nb_agents*self.map.t))) 
-        #             csv_out.writerow(data)
-        
-        
-        # if self.genome_menu.check_modify_ring_length != True:
-        #     # Saving the results in a csv file
-        #     filename = 'Data/' + get_time_stamp() + 'best_fitness_L=' + str(self.map.ring_length) + '.csv'
-        #     with open(filename,'w+') as out:
-        #         csv_out = csv.writer(out)
-        #         for i, row in enumerate(gen_fitness):
-        #             csv_out.writerow((i,row))
