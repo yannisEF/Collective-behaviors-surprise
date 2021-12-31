@@ -5,6 +5,7 @@ from copy import deepcopy
 from utils import *
 from neural_network import ActionNetwork, PredictionNetwork
 
+
 class Agent:
     """
     A single agent able to move in a map, unaware of its current state
@@ -16,6 +17,7 @@ class Agent:
         self.id = Agent.id
         Agent.id += 1
 
+        self.nb_sensors = 4
         self.sensor_range_0 = sensor_range_0
         self.sensor_0 = [False, False]
         self.sensor_0_prediction = [None, None]
@@ -34,6 +36,7 @@ class Agent:
         self.prediction_network = deepcopy(prediction_network)
 
         self.score = 0 # The sum of correct predictions over the existence of the agent
+        self.position_history = [] # The history of the agent's positions
     
     def reset(self) -> None:
         """
@@ -42,7 +45,10 @@ class Agent:
 
         self.reset_sensors()
         self.direction = random.choice([-1, 1])
+
         self.score = 0
+        self.distance_traveled = 0
+        self.position_history = []
 
     def reset_sensors(self) -> None:
         """

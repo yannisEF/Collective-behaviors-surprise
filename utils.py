@@ -1,6 +1,7 @@
 from tkinter import filedialog
 import pickle
-
+import datetime
+import matplotlib.pyplot as plt
 
 
 def reverse_dict_with_repeat(A_dict:dict):
@@ -17,6 +18,7 @@ def reverse_dict_with_repeat(A_dict:dict):
     
     return new_dict
 
+
 def save_file(obj_saved):
     """
     Saves an object into a file
@@ -31,6 +33,7 @@ def save_file(obj_saved):
     except FileNotFoundError:
         return "not saved"
 
+
 def load_file():
     """
     Loads a file and return its content
@@ -43,3 +46,70 @@ def load_file():
             return path_to_load.split("/")[-1].split(".")[0], pickle.load(f)
     except FileNotFoundError:
         return None, None
+
+
+def check_selected(func):
+    """
+    Decorator to check if at least one csv file is selected in a listbox
+    """
+
+    def inner(*args, **kwargs):
+        res = None
+        try:
+            res = func(*args, **kwargs)
+        except IndexError:
+            print("Please select at least one file.")
+        except Exception as e:
+            print(e)
+            pass
+
+        return res
+    return inner
+
+
+def get_time_stamp():
+    return datetime.datetime.now().strftime("%Y%m%d_%H%M")
+
+
+def read_csv_files(filename, offset=-1, title="unnamed graph", xLabel="unnamed x-axis", yLabel="unnamed y-axis"):
+    """
+    Plots boxplots from a list of csv files
+    """
+
+    with open(filename, 'r') as f:
+        rawlines = [line.replace("\n", "") for line in f.readlines()]
+    
+    lines = [tuple(map(float, line.split(","))) for line in rawlines if len(line) != 0 and line[0] != "#"]
+    
+    xData, yData = [], []
+    for line in lines:
+        xData.append(line[0])
+        yData.append(line[1])
+
+    data = {}
+    for i in range(len(xData)):
+        if int(xData[i]) not in data:
+            data[int(xData[i])] = []
+
+        data[int(xData[i])].append(yData[i])
+
+    # Create a figure instance
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    # plot data
+    ax.boxplot(list(data.values()), positions=list(data.keys()))
+
+    # Remove top axes and right axes ticks
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+
+    ax.set_autoscale_on(True)
+
+    # Add labels and title
+    plt.xlabel(xLabel)
+    plt.ylabel(yLabel)
+
+    plt.title(title if title not in ["", "unnamed graph"] else get_time_stamp())
+
+    # Display
+    plt.show()

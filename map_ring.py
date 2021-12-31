@@ -33,10 +33,12 @@ class Ring(Map):
         Moves an agent on the map, adds noise to the new position
         Returns its position
         """
+        
+        position_shift = agent.direction * agent.speed
+        position_shift += agent.noise * (2 * random.random() - 1)
 
-        new_position = agent.position + agent.direction * agent.speed
-        new_position += agent.noise * (2 * random.random() - 1)
-
+        new_position = agent.position + position_shift
+        
         if self.resolution is not None:
             new_position = new_position - new_position % self.resolution
         

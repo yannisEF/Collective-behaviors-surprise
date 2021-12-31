@@ -97,3 +97,4 @@ class PredictionNetwork(GenomeNetwork):
         out, self.hn = self.fully_connected1(x, self.hn)
         relu = torch.nn.ReLU()(out)
         return torch.nn.Sigmoid()(self.fully_connected2(relu))
+

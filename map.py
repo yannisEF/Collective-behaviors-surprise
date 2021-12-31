@@ -1,4 +1,4 @@
-import random
+from progress.bar import Bar
 
 from utils import *
 from agents import Agent
@@ -65,7 +65,7 @@ class Map:
             self.agent_to_pos[genome_id][new_agent] = new_position
             new_agent.position = new_position
 
-    def _step(self, genome_id):
+    def _step(self, genome_id, max_record_hoziron=0):
         """
         Run a step of the environment
         """
@@ -84,30 +84,37 @@ class Map:
             self.agent_to_pos[genome_id][agent] = new_position
             agent.position = new_position
 
+            agent.position_history = agent.position_history[-max_record_hoziron:] + [new_position]
+
         # Checking the agents' sensors
         pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos[genome_id])
         for agent in agents:
             agent.reset_sensors()
             self._detect_others(agent, pos_to_agent)
 
-    def run(self, length:int, verbose=False, genome_to_run=None):
+    def run(self, length:int, verbose=False, genome_to_run=None, progress_bar=False):
         """
         Run the environment for a given length
         """
 
+        if progress_bar is True:
+            print()
+            bar = Bar("Simulating a run of length {}".format(length), max=length)
+
         self.length_sim += length
-
-        
         for _ in range(length):
-            self._step(self.genome_to_show if genome_to_run is None else genome_to_run)
-
+            self._step(self.genome_to_show if genome_to_run is None else genome_to_run, max_record_hoziron=length)
+        
             if verbose is True: print(self)
-    
+            if progress_bar is True:
+                bar.next()
+        
     def reset(self, genome_to_reset=None):
         """
         Reset the simulation
         """
 
+        self.length_sim = 0
         for genome, agents in self.agents.items():
             if genome_to_reset is None or genome == genome_to_reset:
                 for agent in agents:
