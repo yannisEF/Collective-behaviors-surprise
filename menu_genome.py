@@ -190,7 +190,7 @@ class GenomeMenu(tk.Frame):
         conc_gen_fitness = []
         conc_fitness, conc_distance, conc_entropy, conc_ratio = [], [], [], []
         for _ in range(nb_runs):
-            print("Run {}/{}".format(_, nb_runs))
+            print("Run {}/{}".format(_+1, nb_runs))
             self.application.play_menu.reset_simulation()
             gen_fitness, covered_distance, entropy, cluster_ratio = self.application.evolve(max_generations=max_generations, genome_to_evolve=genome_to_evolve)
 
@@ -211,9 +211,7 @@ class GenomeMenu(tk.Frame):
 
         with open(path.format(output_prefix, "gen_fitness", length), 'a+') as f:
             for gen_fitness in conc_gen_fitness:
-                print(len(gen_fitness))
                 for step, fit in enumerate(gen_fitness):
-                    print(step, fit)
                     csv.writer(f).writerow((step, fit))
 
         with open(path.format(output_prefix, "fitness", iterated), 'a+') as f:
@@ -260,7 +258,7 @@ class GenomeMenu(tk.Frame):
         
         genome_to_evolve = self.application.id_to_genome[self.selection-1]
 
-        if self.check_modify_ring_length == True:
+        if self.check_modify_ring_length.get() == True:
             for length in self.application.play_menu.list_lengths:
                 self.application.map.ring_length = length
                 self.write_evolution(path, output_prefix, length, True, *self.iterate_evolution(nb_runs, max_generations, genome_to_evolve))

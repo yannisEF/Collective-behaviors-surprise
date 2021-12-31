@@ -65,10 +65,12 @@ class Ring(Map):
                 # Check if agent in range of sensor 0
                 if abs(diff_pos) <= agent.sensor_range_0:
                     agent.sensor_0[diff_pos <= 0] = True
+                    agent.sensor_0_activation_count[diff_pos <= 0] += 1
                     break
                 # Check if agent is not in range of sensor 0 but in range of sensor 1
                 elif abs(diff_pos) <= agent.sensor_range_1:
                     agent.sensor_1[diff_pos <= 0] = True
+                    agent.sensor_1_activation_count[diff_pos <= 0] += 1
                     break
             
             # Check if all the sensors are activated (therefore nothing more can be done)

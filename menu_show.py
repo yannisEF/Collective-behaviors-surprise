@@ -14,7 +14,7 @@ class ShowMenu(tk.Frame):
     frame_separation_parameters = {"height":40}
     frame_general_parameters = {"borderwidth":3, "relief":"sunken"}
     listbox_parameters = {"width":40, "height":10}
-    button_parameters_csv = {"width":8, "height":1}
+    button_parameters_csv = {"width":15, "height":1}
 
     history_parameters = {"color":"blue"}
 
@@ -30,11 +30,20 @@ class ShowMenu(tk.Frame):
         self.listbox_files.bind('<Return>', self.ask_boxplots_names)
 
         self.frame_select_csv_buttons = tk.Frame(self.frame_select_csv)
+        self.button_remove_csv = tk.Button(self.frame_select_csv_buttons, text="Remove", command=self.remove_csv, **self.button_parameters_csv)
         self.button_load_csv = tk.Button(self.frame_select_csv_buttons, text="Load csv", command=self.load_csv, **self.button_parameters_csv)
         self.button_show_boxplots = tk.Button(self.frame_select_csv_buttons, text="Show boxplots", command=self.ask_boxplots_names)
 
-        self.button_load_csv.grid(row=1, column=1)
-        self.button_show_boxplots.grid(row=1, column=2)
+        self.button_remove_csv["width"] //= 2
+
+        self.check_logscale = tk.BooleanVar()
+        self.check_logscale.set(False)
+        self.checkbutton_logscale = tk.Checkbutton(self.frame_select_csv_buttons, text="Log scale", var=self.check_logscale)
+
+        self.button_remove_csv.grid(row=1, column=1)
+        self.button_load_csv.grid(row=1, column=2)
+        self.button_show_boxplots.grid(row=2, column=2)
+        self.checkbutton_logscale.grid(row=2, column=1)
 
         self.label_csv.grid(row=1, column=1)
         self.listbox_files.grid(row=2, column=1)
@@ -58,7 +67,18 @@ class ShowMenu(tk.Frame):
         self.frame_other_buttons.grid(row=1, column=1)
         frame_separation.grid(row=2, column=1)
         self.frame_select_csv.grid(row=3, column=1)
-        
+    
+    def remove_csv(self):
+        """
+        Removes a csv file from the list
+        """
+
+        try:
+            self.listbox_files.delete(self.listbox_files.curselection())
+            self.listbox_files.select_set(0)
+        except tk.TclError:
+            pass
+
     def load_csv(self):
         """
         Adds a csv file to the list of csv files
@@ -78,9 +98,8 @@ class ShowMenu(tk.Frame):
         """
         Show the boxplot of the currently selected files
         """
-
         selected_file = "{}/{}.csv".format(path, self.listbox_files.get(self.selection))
-        read_csv_files(selected_file, title=title, xLabel=xLabel, yLabel=yLabel)
+        read_csv_files(selected_file, title=title, xLabel=xLabel, yLabel=yLabel, logscale=self.check_logscale.get())
     
     def show_history(self, title="Position history", length=500):
         """
@@ -134,6 +153,10 @@ class ShowMenu(tk.Frame):
         """
 
         self.selection = self.listbox_files.curselection()
+        if len(self.selection) == 0:
+            print("Please select a file, or load one in the application.")
+            return
+
         entries = {"title":"Graph's title", "xLabel":"X label", "yLabel":"Y label"}
         AskMenu(tk.Toplevel(self), function=self.show_boxplots, entries=entries)
     

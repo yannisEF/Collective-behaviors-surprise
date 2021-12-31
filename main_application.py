@@ -15,7 +15,7 @@ from menu_genome import GenomeMenu
 from menu_show import ShowMenu
 
 from neural_network import ActionNetwork, PredictionNetwork
-from utils import get_time_stamp
+from utils import entropy, get_time_stamp
 
 
 class MainApplication(tk.Frame):
@@ -33,7 +33,7 @@ class MainApplication(tk.Frame):
     default_max_generations = 30
     default_history_length = 500
     
-    def __init__(self, master, ring_length=25, simulation_speed=1, length_fitness=100, nb_run_fitness=1, nb_genomes=1, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
+    def __init__(self, master, ring_length=25, simulation_speed=1, length_fitness=100, length_score=500, nb_run_fitness=1, nb_genomes=1, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
         super().__init__(master)
         self.master.resizable(False, False)
         
@@ -41,6 +41,7 @@ class MainApplication(tk.Frame):
 
         self.nb_run_fitness = nb_run_fitness
         self.length_fitness = length_fitness
+        self.length_score = length_score
 
         self.simulation_speed = simulation_speed
 
@@ -53,11 +54,7 @@ class MainApplication(tk.Frame):
         self.id_to_genome = {}
         for _ in range(nb_genomes):
             self._load_genome()
-            
-        self.modify_length = False
-        self.fitness_L_fname = ""
-        self.covered_dist_L_fname = ""
-        
+                
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
         self.canvas.grid(row=1, column=1)
@@ -185,11 +182,15 @@ class MainApplication(tk.Frame):
         """
 
         agents = list(genome.agents.values())
+
+        avg_entropy = 0
         for agent in agents:
-            pass
-            # NEED TO COMPUTE PROBABILITY OF ACTIVATION
+            ent_0 = sum(map(entropy, [count / self.map.length_sim for count in agent.sensor_0_activation_count]))
+            ent_1 = sum(map(entropy, [count / self.map.length_sim for count in agent.sensor_1_activation_count]))
+            
+            avg_entropy += ent_0 + ent_1
         
-        return 0
+        return avg_entropy / (4 * len(agents))
     
     def _compute_largest_cluster_ratio(self, genome):
         """
@@ -261,7 +262,7 @@ class MainApplication(tk.Frame):
 
             # Running the genome to compute the scores
             self.map.reset(genome_to_reset=genome.id)
-            self.map.run(length=self.default_history_length, genome_to_run=genome.id)
+            self.map.run(length=self.length_score, genome_to_run=genome.id)
 
             covered_distance += self._compute_covered_distance(genome)
             entropy += self._compute_entropy(genome)

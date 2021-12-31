@@ -2,6 +2,7 @@ from tkinter import filedialog
 import pickle
 import datetime
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def reverse_dict_with_repeat(A_dict:dict):
@@ -71,7 +72,7 @@ def get_time_stamp():
     return datetime.datetime.now().strftime("%Y%m%d_%H%M")
 
 
-def read_csv_files(filename, offset=-1, title="unnamed graph", xLabel="unnamed x-axis", yLabel="unnamed y-axis"):
+def read_csv_files(filename, offset=-1, title="unnamed graph", xLabel="unnamed x-axis", yLabel="unnamed y-axis", logscale=True):
     """
     Plots boxplots from a list of csv files
     """
@@ -104,6 +105,8 @@ def read_csv_files(filename, offset=-1, title="unnamed graph", xLabel="unnamed x
     ax.get_yaxis().tick_left()
 
     ax.set_autoscale_on(True)
+    if logscale is True:
+        plt.yscale("log")
 
     # Add labels and title
     plt.xlabel(xLabel)
@@ -113,3 +116,12 @@ def read_csv_files(filename, offset=-1, title="unnamed graph", xLabel="unnamed x
 
     # Display
     plt.show()
+
+
+def entropy(prob):
+    """
+    Computes the entropy of the given probability
+    """
+
+    if prob <= 0 or prob >= 1:  return 0
+    return -prob * np.log2(prob) - (1 - prob) * np.log2(1 - prob)

@@ -17,14 +17,15 @@ class Agent:
         self.id = Agent.id
         Agent.id += 1
 
-        self.nb_sensors = 4
         self.sensor_range_0 = sensor_range_0
         self.sensor_0 = [False, False]
         self.sensor_0_prediction = [None, None]
+        self.sensor_0_activation_count = [0, 0] # Used for entropy calculation
 
         self.sensor_range_1 = sensor_range_1
         self.sensor_1 = [False, False]
         self.sensor_1_prediction = [None, None]
+        self.sensor_1_activation_count = [0, 0] # Used for entropy calculation
 
         self.speed = speed
         self.noise = noise
@@ -49,6 +50,9 @@ class Agent:
         self.score = 0
         self.distance_traveled = 0
         self.position_history = []
+
+        self.sensor_0_activation_count = [0, 0]
+        self.sensor_1_activation_count = [0, 0]        
 
     def reset_sensors(self) -> None:
         """
