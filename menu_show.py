@@ -142,6 +142,11 @@ class ShowMenu(tk.Frame):
         Let the user enter the simulated run's length
         """
 
-        self.selection = self.application.genome_menu.get_selection()-1
+        try:
+            self.selection = self.application.genome_menu.get_selection()-1
+        except:
+            print("Please select a genome, or add one to the simulation.")
+            return
+
         entries = {"title":"Graph's title", "length":"Simulated run's length"}
         AskMenu(tk.Toplevel(self), function=self.show_history, entries=entries)
