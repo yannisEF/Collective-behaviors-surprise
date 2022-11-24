@@ -1,7 +1,8 @@
 from progress.bar import Bar
 
-from utils import *
 from agents import Agent
+from utils import Position
+
 
 class Map:
     """
@@ -9,15 +10,11 @@ class Map:
     """
 
     def __init__(self) -> None:
-        self.agents = {} # genome's id:Agent
-        self.agent_to_pos = {} # genome's id:{Agent:pos}
-
-        self.genome_to_show = 0 # id of genome to show
+        self.all_agents = {} # id:[Agent, pos]
 
         self.name = "Map"
-        self.length_sim = 0
     
-    def _init_agent_position(self, new_agent:Agent):
+    def _init_agent_position(self) -> Position:
         """
         Initialize a new agent's position in the map, 
         Returns its position
@@ -25,74 +22,56 @@ class Map:
 
         raise NotImplementedError("Overriden by other topologies")
 
-    def _move_agent(self, agent:Agent):
+    def _move_agent(self, agent:Agent, current_position:Position) -> Position:
         """
         Moves an agent on the map
-        Returns its position
+        Returns its new position
         """
 
         raise NotImplementedError("Overriden by other topologies")
     
-    def _detect_others(self, agent:Agent, pos_to_agent:dict):
+    def _detect_others(self, agent:Agent, position:Position, all_positions:list[float]) -> None:
         """
         Updates the agent's sensor based on the others' positions
         """
 
         raise NotImplementedError("Overriden by other topologies")
-    
-    def show_console(self):
-        """
-        Outputs the map in the console
-        """
-
-        raise NotImplementedError("Overriden by other topologies")
         
-    def add_agent(self, genome_id:int, new_agent:Agent):
+    def add_agent(self, new_agent:Agent) -> None:
         """
         Add an agent to the map
         """
 
-        if genome_id not in self.agents:
-            self.agents[genome_id] = []
-        
-        if genome_id not in self.agent_to_pos:
-            self.agent_to_pos[genome_id] = {}
+        new_id = new_agent.id
+        if new_id not in self.all_agents:
+            new_position = self._init_agent_position()
+            self.all_agents[new_id] = (new_agent, new_position)
+            self.pos_to_id[new_position] = new_id
 
-        if new_agent not in self.agents[genome_id]:
-            self.agents[genome_id].append(new_agent)
-
-            new_position = self._init_agent_position(new_agent)
-            self.agent_to_pos[genome_id][new_agent] = new_position
-            new_agent.position = new_position
-
-    def _step(self, genome_id, max_record_hoziron=0):
+    def _step(self) -> None:
         """
         Run a step of the environment
         """
 
-        agents = self.agents[genome_id]
-
-        # The agents take their decision
-        for agent in agents:
-            agent.compute_score()
+        all_positions = []
+        for agent, position in self.all_agents.values():
+            # The agents take their decision
+            agent.compute_surprise()
             agent.take_decision()
             agent.predict_sensors()
 
-        # The map updates the agents' position
-        for agent in agents:
-            new_position = self._move_agent(agent)
-            self.agent_to_pos[genome_id][agent] = new_position
-            agent.position = new_position
+            # The map updates the agents' position
+            new_position = self._move_agent(agent, position)
+            self.all_agents[agent.id][-1] = new_position
+            
+            all_positions.append(new_position)       
 
-            agent.position_history = agent.position_history[-max_record_hoziron:] + [new_position]
-
-        # Checking the agents' sensors
-        pos_to_agent = reverse_dict_with_repeat(self.agent_to_pos[genome_id])
-        for agent in agents:
+        # Checking the agents' sensors after they have all moved
+        for agent, position in self.all_agents.values():
             agent.reset_sensors()
-            self._detect_others(agent, pos_to_agent)
+            self._detect_others(agent, position, all_positions)
 
-    def run(self, length:int, verbose=False, genome_to_run=None, progress_bar=False):
+    def run(self, length:int, progress_bar=False) -> None:
         """
         Run the environment for a given length
         """
@@ -101,32 +80,34 @@ class Map:
             print()
             bar = Bar("Simulating a run of length {}".format(length), max=length)
 
-        self.length_sim += length
         for _ in range(length):
-            self._step(self.genome_to_show if genome_to_run is None else genome_to_run, max_record_hoziron=length)
-        
-            if verbose is True: print(self)
+            self._step()
+
             if progress_bar is True:
                 bar.next()
         
-    def reset(self, genome_to_reset=None):
+    def reset(self) -> None:
         """
         Reset the simulation
         """
 
-        self.length_sim = 0
-        for genome, agents in self.agents.items():
-            if genome_to_reset is None or genome == genome_to_reset:
-                for agent in agents:
-                    agent.reset()
-                    agent.position = self._init_agent_position(agent)
-    
-    def __str__(self):
-        text = "{}\t{} genomes \n".format(self.name, len(self.agents))
+        old_agents, self.all_agents = self.all_agents, {}
+        for agent, _ in old_agents.keys():
+            agent.reset()
+            self.add_agent(agent)
 
-        for genome, agents in self.agents.items():
-            text += "genome {}\t {} agents\n".format(genome, len(agents))
-            for agent in agents:
-                text += str(agent) + "\n"
-        
-        return text[:-1]
+
+class Map2D(Map):
+    """
+    A map able to cast its positions in 2D space for visualization purposes
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def get_2D_positions(self, *args, **kwargs) -> list[Position]:
+        """
+        Returns a list of the agent's positions in 2D space
+        """
+
+        raise NotImplementedError("Overriden by other topologies")

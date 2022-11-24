@@ -224,7 +224,7 @@ class MainApplication(tk.Frame):
         print("Starting evolution process..", end='\r')
 
         # CMA-ES
-        start_solutions = np.array(genome_to_evolve.to_tensor())        
+        start_solutions = np.array(genome_to_evolve.to_tensor())
         es = cma.purecma.CMAES(start_solutions, 0.5)
 
         # Data to register

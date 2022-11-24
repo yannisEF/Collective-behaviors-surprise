@@ -4,14 +4,21 @@ from copy import deepcopy
 from agents import Agent
 from neural_network import ActionNetwork, PredictionNetwork
 
+
 class Genome:
     """
-    A class that evovles a number of agents
+    A class that evolves a number of agents
     """
 
     id = 0
 
-    def __init__(self, name="Genome", action_network=None, prediction_network=None) -> None:
+    def __init__(
+        self,
+        name="Genome",
+        action_network=None,
+        prediction_network=None
+    ) -> None:
+    
         self.id = Genome.id
         Genome.id += 1
 
