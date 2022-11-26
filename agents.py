@@ -1,8 +1,6 @@
 import torch
 import random
 
-from copy import deepcopy
-
 from neural_network import ActionNetwork, PredictionNetwork
 
 
@@ -25,15 +23,16 @@ class Agent:
         self.id = Agent.id
         Agent.id += 1
 
-        self.action_network = deepcopy(action_network)
-        self.prediction_network = deepcopy(prediction_network)
+        # Note : maybe deepcopy them? -> no, all agents from a same genome are evaluated in sequence
+        self.action_network = action_network
+        self.prediction_network = prediction_network
 
         # An agent's sensor has a range (from.. to..), a direction, and two subsensors (front and back)
-        self.sensors = (
+        self.sensors = tuple(
             (r, d, [False, False])
             for r, d in sensors_range_and_dir
         )
-        self.sensors_predictions = (
+        self.sensors_predictions = tuple(
             [None, None]
             for r, d in sensors_range_and_dir
         )
@@ -45,7 +44,7 @@ class Agent:
 
     def reset_sensors(self):
         
-        self.sensors = (
+        self.sensors = tuple(
             (r, d, [False, False])
             for r, d, s in self.sensors
         )

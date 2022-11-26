@@ -1,17 +1,18 @@
 import cma
-import csv
 import torch
 import numpy as np
 import tkinter as tk
 
 from progress.bar import Bar
 
-
-from genome import Genome
-from map_ring import Ring
+from agents import Agent
+from agents_params import params_ring_agent
+from agents_utils import Population
+from map import Map2D
+from map_ring import MapRing
 
 from menu_play import PlayMenu
-from menu_genome import GenomeMenu
+from menu_population import PopulationMenu
 from menu_show import ShowMenu
 
 from neural_network import ActionNetwork, PredictionNetwork
@@ -20,7 +21,7 @@ from utils import entropy, get_time_stamp
 
 class MainApplication(tk.Frame):
     """
-    An application that allows to visualize the simulation, currently only on a ring map.
+    An application that allows to visualize and evolve a simulation.
     """
 
     frame_side_separation_parameters = {"height":40}
@@ -33,27 +34,41 @@ class MainApplication(tk.Frame):
     default_max_generations = 30
     default_history_length = 500
     
-    def __init__(self, master, ring_length=25, simulation_speed=1, length_fitness=100, length_score=500, nb_run_fitness=1, nb_genomes=1, nb_agents=20, agent_param={"sensor_range_0":.5, "sensor_range_1":1.0, "speed":.1, "noise":.01}):
+    def __init__(
+        self,
+        master: tk.Tk,
+        simulation_speed: float = 1.,
+        length_fitness: int = 100,
+        length_score: int = 500,
+        nb_run_fitness: int = 1,
+        nb_populations: int = 1,
+        nb_agents: int = 20,
+        agent_param: dict = params_ring_agent,
+        default_map: Map2D = MapRing,
+        map_parameters: dict = {"ring_length":25}
+    ) -> None:
+
         super().__init__(master)
         self.master.resizable(False, False)
         
         self.is_paused = True
+        self.simulation_speed = simulation_speed
 
         self.nb_run_fitness = nb_run_fitness
         self.length_fitness = length_fitness
         self.length_score = length_score
 
-        self.simulation_speed = simulation_speed
-
         self.nb_agents = nb_agents
         self.agent_param = agent_param
 
-        self.map = Ring(ring_length=ring_length)
+        self.map = default_map(**map_parameters)
+        self.hidden_maps = []
 
-        self.genomes = []
-        self.id_to_genome = {}
-        for _ in range(nb_genomes):
-            self._load_genome()
+        self.id_to_population = {}
+        for _ in range(nb_populations):
+            self._load_population()
+        self.populations = self.id_to_population.values()
+        self.map.reset(input_population=list(self.populations)[0])
                 
         self.canvas_center = (self.canvas_parameters["width"]//2, self.canvas_parameters["height"]//2)
         self.canvas = tk.Canvas(self, **self.canvas_parameters)
@@ -68,11 +83,11 @@ class MainApplication(tk.Frame):
         
         side_menu = tk.Frame(self)
 
-        self.genome_menu = GenomeMenu(side_menu, self)
+        self.population_menu = PopulationMenu(side_menu, self)
         side_separation = tk.Frame(side_menu, **self.frame_side_separation_parameters)
         self.show_menu = ShowMenu(side_menu, self)
 
-        self.genome_menu.grid(row=1, column=2)
+        self.population_menu.grid(row=1, column=2)
         side_separation.grid(row=2, column=2)
         self.show_menu.grid(row=3, column=2)
 
@@ -96,46 +111,44 @@ class MainApplication(tk.Frame):
             return result
         return inner
 
-    def _load_genome(self, action_network=None, prediction_network=None, new_genome=None, name=None):
+    def _load_population(self, new_population=None, name=None):
         """
-        Load a genome with specified action network and prediction network
+        Load a population with specified action network and prediction network
         """
 
-        new_genome = Genome(action_network=action_network, prediction_network=prediction_network) if new_genome is None else new_genome
-        self.genomes.append(new_genome)
-        self.id_to_genome[new_genome.id] = new_genome
+        new_population = Population(
+            nb_agents=self.nb_agents,
+            action_network=ActionNetwork(**self.map.default_params_action_nn),
+            prediction_network=PredictionNetwork(**self.map.default_params_prediction_nn),
+            agents_param=self.agent_param,
+            name=name
+        ) if new_population is None else new_population
 
-        for _ in range(self.nb_agents):
-            new_agent = new_genome.add_agent(**self.agent_param)
-            self.map.add_agent(new_genome.id, new_agent)
+        self.id_to_population[new_population.id] = new_population
         
-        if name is not None or name == "":
-            new_genome.name = name
+        if name is not None or name != "":
+            new_population.name = name
 
-        return new_genome
+        return new_population
 
     def _draw_map(self):
         """
-        Draws a ring map
+        Draws the current map
         """
 
-        dw = self.canvas_parameters["width"] - self.map_parameters["size"]
-        dh = self.canvas_parameters["height"] - self.map_parameters["size"]
-
-        x0, y0 = dw//2, dh//2
-        x1, y1 = x0 + self.map_parameters["size"], y0 + self.map_parameters["size"]
-
-        self.canvas.create_oval(x0, y0, x1, y1, fill=self.map_parameters["color"])
-
-        margin = self.map_parameters["width"]
-        self.canvas.create_oval(x0 + margin, y0 + margin, x1 - margin, y1 - margin, fill=self.canvas_parameters["bg"])
+        self.map.draw_map(self.canvas, self.canvas_parameters, self.map_parameters)
     
     def _draw_agents(self):
         """
         Draws all of the agents
         """
 
-        for x, y in self.map.position_to_ring(self.map_parameters["size"], self.canvas_center):
+        positions = self.map.get_2D_positions(
+            map_size=self.map_parameters["size"],
+            canvas_center=self.canvas_center
+        )
+        
+        for x, y in positions:
             x0, y0 = x - self.agent_parameters["size"], y - self.agent_parameters["size"]
             x1, y1 = x + self.agent_parameters["size"], y + self.agent_parameters["size"]
             
@@ -149,39 +162,41 @@ class MainApplication(tk.Frame):
         self.canvas.delete('all')
         self._draw_map()
         self._draw_agents()
-    
-    def _compute_genome_fitness(self, genome_tensor):
+
+
+# ALL SCORES NOT HERE, NOT LINKED TO GRAPH APPLICATION
+    def _compute_population_fitness(self, population_tensor):
         """
-        Return the average a genome's fitness over a number of runs (slow)
+        Return the average a population's tensor's fitness over a number of runs (slow)
         """
         
-        genome = Genome().from_tensor(torch.Tensor(genome_tensor))
-        self._load_genome(new_genome=genome)
+        population = Population().from_tensor(torch.Tensor(population_tensor))
+        self._load_population(new_population=population)
 
         reward = 0
         for _ in range(self.nb_run_fitness):
-            self.map.reset(genome_to_reset=genome.id)
-            self.map.run(length=self.length_fitness, genome_to_run=genome.id)
-            reward += genome.compute_fitness(self.length_fitness)
+            self.map.reset(population_to_reset=population.id)
+            self.map.run(length=self.length_fitness, population_to_run=population.id)
+            reward += population.compute_fitness(self.length_fitness)
         
         return reward / self.nb_run_fitness
 
-    def _compute_covered_distance(self, genome):
+    def _compute_covered_distance(self, population):
         """
-        Computes the covered distance by the genome, assuming all agents have the same speed
+        Computes the covered distance by the population, assuming all agents have the same speed
         """
 
-        agents = list(genome.agents.values())
+        agents = list(population.agents.values())
         tau = 0.5 * self.map.ring_length / agents[0].speed
 
         return sum(abs(agent.position - agent.position_history[-int(tau)]) for agent in agents) / (len(agents) * tau)
     
-    def _compute_entropy(self, genome):
+    def _compute_entropy(self, population):
         """
-        Computes the average entropy of the genome's agents' sensors
+        Computes the average entropy of the population's agents' sensors
         """
 
-        agents = list(genome.agents.values())
+        agents = list(population.agents.values())
 
         avg_entropy = 0
         for agent in agents:
@@ -192,12 +207,12 @@ class MainApplication(tk.Frame):
         
         return avg_entropy / (4 * len(agents))
     
-    def _compute_largest_cluster_ratio(self, genome):
+    def _compute_largest_cluster_ratio(self, population):
         """
         Computes the ratio of swarm in the largest cluster
         """
 
-        agents = sorted(list(genome.agents.values()), key=lambda x: x.position)
+        agents = sorted(list(population.agents.values()), key=lambda x: x.position)
 
         cluster_sizes = [1]
         for i, agent in enumerate(agents):
@@ -211,20 +226,20 @@ class MainApplication(tk.Frame):
                 cluster_sizes.append(1)
         
         return max(cluster_sizes) / len(agents)
-        
+
     @_pause_during_execution
-    def evolve(self, max_generations, genome_to_evolve, replace_population=True):
+    def evolve(self, max_generations, population_to_evolve, replace_population=True):
         """
-        Evolves the population of genomes
+        Evolves the population with CMA-ES (from a starting point, creates a cloud of points that converge towards optimal)
         Returns the best fitness over generations, covered distance, entropy and cluster ratio of the last generation
         """
 
         # Progress bar
-        bar = Bar("Evolving {} {} over {} iterations with a map size of {}".format(genome_to_evolve.name, genome_to_evolve.id+1, max_generations, self.map.ring_length), max=max_generations)
+        bar = Bar("Evolving {} {} over {} iterations with a map size of {}".format(population_to_evolve.name, population_to_evolve.id+1, max_generations, self.map.ring_length), max=max_generations)
         print("Starting evolution process..", end='\r')
 
         # CMA-ES
-        start_solutions = np.array(genome_to_evolve.to_tensor())
+        start_solutions = np.array(population_to_evolve.to_tensor())
         es = cma.purecma.CMAES(start_solutions, 0.5)
 
         # Data to register
@@ -234,7 +249,7 @@ class MainApplication(tk.Frame):
         i = 0
         while not es.stop() and i < max_generations:
             solutions = es.ask()
-            fitness = [self._compute_genome_fitness(gen) for gen in solutions]
+            fitness = [self._compute_population_fitness(gen) for gen in solutions]
             es.tell(solutions, [-fit for fit in fitness]) # minimization so take opposite of fitness
 
             gen_fitness.append(np.max(fitness))
@@ -243,30 +258,30 @@ class MainApplication(tk.Frame):
             i += 1
 
         if replace_population is True:
-            for gen in self.genomes:
-                self.genome_menu.delete_genome(gen.id)
+            for gen in self.populations:
+                self.population_menu.delete_population(gen.id)
         
         # Progress bar
         print()
         bar = Bar("Evaluating generated solutions", max=len(solutions))
         print("Starting evaluation of generated solutions..", end='\r')
 
-        # Adding the generated genomes to the menu and computing the average of the scores over the population
+        # Adding the generated populations to the menu and computing the average of the scores over the population
         covered_distance, entropy, cluster_ratio = 0, 0, 0
         action_network, prediction_network = ActionNetwork(), PredictionNetwork()
         for gen_tensor in solutions:
             action_network.from_tensor(torch.Tensor(gen_tensor[:action_network.total_size]))
             prediction_network.from_tensor(torch.Tensor(gen_tensor[action_network.total_size:]))
             
-            genome = self.genome_menu.add_genome(parameters={"action_network":action_network, "prediction_network":prediction_network})
+            population = self.population_menu.add_population(parameters={"action_network":action_network, "prediction_network":prediction_network})
 
-            # Running the genome to compute the scores
-            self.map.reset(genome_to_reset=genome.id)
-            self.map.run(length=self.length_score, genome_to_run=genome.id)
+            # Running the population to compute the scores
+            self.map.reset(population_to_reset=population.id)
+            self.map.run(length=self.length_score, population_to_run=population.id)
 
-            covered_distance += self._compute_covered_distance(genome)
-            entropy += self._compute_entropy(genome)
-            cluster_ratio += self._compute_largest_cluster_ratio(genome)
+            covered_distance += self._compute_covered_distance(population)
+            entropy += self._compute_entropy(population)
+            cluster_ratio += self._compute_largest_cluster_ratio(population)
 
             bar.next()
 
@@ -278,7 +293,7 @@ class MainApplication(tk.Frame):
         Main loop of the application, runs the simulation at a speed defined by the user
         """
 
-        if self.is_paused is False and len(self.genomes) != 0:
+        if self.is_paused is False and len(self.populations) != 0:
             self.map.run(self.play_menu.scale_speed.get())            
             self._make_frame()
 

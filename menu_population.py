@@ -7,9 +7,9 @@ from utils import *
 from menu_ask import AskMenu
 
 
-class GenomeMenu(tk.Frame):
+class PopulationMenu(tk.Frame):
     """
-    A side-menu that allows the user the advance through the Genomes' evolution of the simulation, and to select the current visualization
+    A side-menu that allows the user the advance through the Populations' evolution of the simulation, and to select the current visualization
     """
 
     frame_separation_parameters = {"height":40}
@@ -21,36 +21,36 @@ class GenomeMenu(tk.Frame):
         super().__init__(master)
         self.application = application
 
-        # Frame to select genomes
-        self.frame_select_genomes = tk.Frame(self, **self.frame_general_parameters)
-        self.label_genomes = tk.Label(self.frame_select_genomes, text="Genomes selection")
-        self.button_random_genome = tk.Button(self.frame_select_genomes, text="Generate", command=self.add_genome, **self.button_parameters)
+        # Frame to select populations
+        self.frame_select_populations = tk.Frame(self, **self.frame_general_parameters)
+        self.label_populations = tk.Label(self.frame_select_populations, text="Populations selection")
+        self.button_random_population = tk.Button(self.frame_select_populations, text="Generate", command=self.add_population, **self.button_parameters)
 
-        self.listbox_genomes = tk.Listbox(self.frame_select_genomes, selectmode='single', **self.listbox_parameters)
-        self.listbox_genomes.bind('<Return>', self.show_genome)
+        self.listbox_populations = tk.Listbox(self.frame_select_populations, selectmode='single', **self.listbox_parameters)
+        self.listbox_populations.bind('<Return>', self.show_population)
 
-        self.frame_select_genomes_buttons = tk.Frame(self.frame_select_genomes)
-        self.button_show_genome = tk.Button(self.frame_select_genomes_buttons, text="Show Genome", command=self.show_genome, **self.button_parameters)
-        self.button_delete_genome = tk.Button(self.frame_select_genomes_buttons, text="Delete", command=self.delete_genome, **self.button_parameters)
-        self.button_save_genome = tk.Button(self.frame_select_genomes_buttons, text="Save Genome", command=self.save_genome, **self.button_parameters)
-        self.button_load_genome = tk.Button(self.frame_select_genomes_buttons, text="Load Genome", command=self.load_genome, **self.button_parameters)
+        self.frame_select_populations_buttons = tk.Frame(self.frame_select_populations)
+        self.button_show_population = tk.Button(self.frame_select_populations_buttons, text="Show Population", command=self.show_population, **self.button_parameters)
+        self.button_delete_population = tk.Button(self.frame_select_populations_buttons, text="Delete", command=self.delete_population, **self.button_parameters)
+        self.button_save_population = tk.Button(self.frame_select_populations_buttons, text="Save Population", command=self.save_population, **self.button_parameters)
+        self.button_load_population = tk.Button(self.frame_select_populations_buttons, text="Load Population", command=self.load_population, **self.button_parameters)
 
-        self.button_show_genome.grid(row=1, column=1)
-        self.button_delete_genome.grid(row=2, column=1)
-        self.button_save_genome.grid(row=1, column=2)
-        self.button_load_genome.grid(row=2, column=2)
+        self.button_show_population.grid(row=1, column=1)
+        self.button_delete_population.grid(row=2, column=1)
+        self.button_save_population.grid(row=1, column=2)
+        self.button_load_population.grid(row=2, column=2)
 
-        self.label_genomes.grid(row=1, column=1)
-        self.button_random_genome.grid(row=1, column=2)
-        self.listbox_genomes.grid(row=2, column=1, columnspan=2)
-        self.frame_select_genomes_buttons.grid(row=3, column=1, columnspan=2)
+        self.label_populations.grid(row=1, column=1)
+        self.button_random_population.grid(row=1, column=2)
+        self.listbox_populations.grid(row=2, column=1, columnspan=2)
+        self.frame_select_populations_buttons.grid(row=3, column=1, columnspan=2)
 
-        self.button_random_genome["width"] //= 2
-        self.button_delete_genome["width"] //= 2
+        self.button_random_population["width"] //= 2
+        self.button_delete_population["width"] //= 2
 
-        for gen in self.application.genomes:
-            self.listbox_genomes.insert('end', "Genome {}".format(gen.id+1))
-        self.listbox_genomes.select_set(0)
+        for gen in self.application.populations:
+            self.listbox_populations.insert('end', "Population {}".format(gen.id+1))
+        self.listbox_populations.select_set(0)
 
         # Frame to separate UI elements
         self.frame_separation_1 = tk.Frame(self, **self.frame_separation_parameters)
@@ -59,7 +59,7 @@ class GenomeMenu(tk.Frame):
         self.frame_evolve = tk.Frame(self, **self.frame_general_parameters)
 
         self.frame_evolve_buttons = tk.Frame(self.frame_evolve)
-        self.button_start_evolve = tk.Button(self.frame_evolve_buttons, text="Evolve genomes", command=self.ask_evolution, **self.button_parameters)
+        self.button_start_evolve = tk.Button(self.frame_evolve_buttons, text="Evolve populations", command=self.ask_evolution, **self.button_parameters)
 
         #   Checkbutton to iterate the evolution process over all lengths
         self.check_modify_ring_length = tk.BooleanVar()
@@ -73,7 +73,7 @@ class GenomeMenu(tk.Frame):
         self.frame_evolve_buttons.grid(row=1, column=1)
 
         # Packing frames
-        self.frame_select_genomes.grid(row=1, column=1)
+        self.frame_select_populations.grid(row=1, column=1)
         self.frame_separation_1.grid(row=2, column=1)
         self.frame_evolve.grid(row=5, column=1)
     
@@ -82,84 +82,84 @@ class GenomeMenu(tk.Frame):
         Retrieves the current selection
         """
 
-        index = self.listbox_genomes.curselection()
-        return int(self.listbox_genomes.get(index).split()[-1])
+        index = self.listbox_populations.curselection()
+        return int(self.listbox_populations.get(index).split()[-1])
     
-    def show_genome(self, event=None):
+    def show_population(self, event=None):
         """
-        Shows on the selected Genome on the application's canvas
+        Shows on the selected Population on the application's canvas
         """
 
         try:
-            self.application.map.genome_to_show = self.get_selection() - 1
+            self.application.map.population_to_show = self.get_selection() - 1
             self.application._make_frame()
         except tk.TclError:
             pass
     
-    def delete_genome(self, id_to_delete=None):
+    def delete_population(self, id_to_delete=None):
         """
-        Deletes the selected or specified genome
+        Deletes the selected or specified population
         """
         
         try:
-            genome = self.application.id_to_genome[id_to_delete if id_to_delete is not None else self.get_selection() - 1]
-            self.listbox_genomes.delete(self.listbox_genomes.curselection())
+            population = self.application.id_to_population[id_to_delete if id_to_delete is not None else self.get_selection() - 1]
+            self.listbox_populations.delete(self.listbox_populations.curselection())
 
-            self.application.genomes.remove(genome)
-            del self.application.id_to_genome[genome.id]
-            del self.application.map.agents[genome.id]
-            del self.application.map.agent_to_pos[genome.id]
+            self.application.populations.remove(population)
+            del self.application.id_to_population[population.id]
+            del self.application.map.agents[population.id]
+            del self.application.map.agent_to_pos[population.id]
 
             try:
-                if self.application.map.genome_to_show == genome.id:
-                    self.application.map.genome_to_show = self.application.genomes[0].id
+                if self.application.map.population_to_show == population.id:
+                    self.application.map.population_to_show = self.application.populations[0].id
                     self.application._make_frame()
                     
             except IndexError:
                 pass
                 
-            self.listbox_genomes.select_set(0)
+            self.listbox_populations.select_set(0)
 
-            if len(self.application.genomes) == 0:
+            if len(self.application.populations) == 0:
                 self.application.canvas.delete("all")
                 self.application._draw_map()
                 
         except tk.TclError:
             pass
 
-    def save_genome(self):
+    def save_population(self):
         """
-        Saves the selected genome in a file
+        Saves the selected population in a file
         """
         
         try:
-            selected_genome = self.application.id_to_genome[self.get_selection()-1]
-            to_save = {"action_network":selected_genome.action_network, "prediction_network":selected_genome.prediction_network}
+            selected_population = self.application.id_to_population[self.get_selection()-1]
+            to_save = {"action_network":selected_population.action_network, "prediction_network":selected_population.prediction_network}
 
             save_file(to_save)
         except tk.TclError:
             pass
     
-    def add_genome(self, parameters={}, name=None):
+    def add_population(self, parameters={}, name=None):
         """
-        Adds a genome with given parameters
+        Adds a population with given parameters
         """
 
-        new_genome = self.application._load_genome(name=name, **parameters)
-        self.listbox_genomes.insert("end", "{} {}".format(new_genome.name, new_genome.id+1))
+        new_population = self.application._load_population(name=name, **parameters)
+        self.listbox_populations.insert("end", "{} {}".format(new_population.name, new_population.id+1))
 
-        self.listbox_genomes.selection_clear(0, tk.END)
-        self.listbox_genomes.selection_set(tk.END)
-        self.listbox_genomes.see("end")
+        self.listbox_populations.selection_clear(0, tk.END)
+        self.listbox_populations.selection_set(tk.END)
+        self.listbox_populations.see("end")
 
-        self.application.map.genome_to_show = new_genome.id
+        self.application.map.population_to_show = new_population.id
         self.application._make_frame()
 
-        return new_genome
+        return new_population
 
-    def load_genome(self):
+    def load_population(self):
         """
-        Loads a genome and adds it to the application
+        Loads a population and adds it to the application
         """
         
         loaded_name, loaded_content = load_file()
@@ -167,7 +167,7 @@ class GenomeMenu(tk.Frame):
         if loaded_name is None:
             return
 
-        self.add_genome(parameters=loaded_content, name=loaded_name)
+        self.add_population(parameters=loaded_content, name=loaded_name)
 
     def ask_evolution(self):
         """
@@ -179,10 +179,10 @@ class GenomeMenu(tk.Frame):
             entries = {"output_prefix":"Name prefix of the output (default is timestamp)", "nb_runs":"Number of runs (default 200)", "max_generations":"Maximum number of generations (default 30)"}
             AskMenu(tk.Toplevel(self), function=self.start_evolution, entries=entries)
         except:
-            print("Please add a genome to the application and select it.")
+            print("Please add a population to the application and select it.")
             pass
     
-    def iterate_evolution(self, nb_runs, max_generations, genome_to_evolve):
+    def iterate_evolution(self, nb_runs, max_generations, population_to_evolve):
         """
         Returns the fitness over the generations, and the scores of the evolution process through the desired number of runs
         """
@@ -192,7 +192,7 @@ class GenomeMenu(tk.Frame):
         for _ in range(nb_runs):
             print("Run {}/{}".format(_+1, nb_runs))
             self.application.play_menu.reset_simulation()
-            gen_fitness, covered_distance, entropy, cluster_ratio = self.application.evolve(max_generations=max_generations, genome_to_evolve=genome_to_evolve)
+            gen_fitness, covered_distance, entropy, cluster_ratio = self.application.evolve(max_generations=max_generations, population_to_evolve=population_to_evolve)
 
             conc_gen_fitness.append(gen_fitness)
             conc_fitness.append(np.max(gen_fitness))
@@ -256,11 +256,11 @@ class GenomeMenu(tk.Frame):
 
         path = "Results/{}_{}_L={}.csv" # prefix, type, mapsize
         
-        genome_to_evolve = self.application.id_to_genome[self.selection-1]
+        population_to_evolve = self.application.id_to_population[self.selection-1]
 
         if self.check_modify_ring_length.get() == True:
             for length in self.application.play_menu.list_lengths:
                 self.application.map.ring_length = length
-                self.write_evolution(path, output_prefix, length, True, *self.iterate_evolution(nb_runs, max_generations, genome_to_evolve))
+                self.write_evolution(path, output_prefix, length, True, *self.iterate_evolution(nb_runs, max_generations, population_to_evolve))
         else:
-            self.write_evolution(path, output_prefix, self.application.map.ring_length, False, *self.iterate_evolution(nb_runs, max_generations, genome_to_evolve))
+            self.write_evolution(path, output_prefix, self.application.map.ring_length, False, *self.iterate_evolution(nb_runs, max_generations, population_to_evolve))

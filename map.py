@@ -1,13 +1,18 @@
+from tkinter import Canvas
 from progress.bar import Bar
 
 from agents import Agent
-from utils import Position
+from agents_utils import Position, Population
 
 
 class Map:
     """
     The map containing the agents
     """
+
+    # Overriden by other topologies
+    default_params_action_nn:dict = {}
+    default_params_prediction_nn:dict = {}
 
     def __init__(self) -> None:
         self.all_agents = {} # id:[Agent, pos]
@@ -45,8 +50,7 @@ class Map:
         new_id = new_agent.id
         if new_id not in self.all_agents:
             new_position = self._init_agent_position()
-            self.all_agents[new_id] = (new_agent, new_position)
-            self.pos_to_id[new_position] = new_id
+            self.all_agents[new_id] = [new_agent, new_position]
 
     def _step(self) -> None:
         """
@@ -71,7 +75,7 @@ class Map:
             agent.reset_sensors()
             self._detect_others(agent, position, all_positions)
 
-    def run(self, length:int, progress_bar=False) -> None:
+    def run(self, length:int, input_population:Population=None, progress_bar:bool=False) -> None:
         """
         Run the environment for a given length
         """
@@ -79,20 +83,26 @@ class Map:
         if progress_bar is True:
             print()
             bar = Bar("Simulating a run of length {}".format(length), max=length)
-
+        
+        self.reset(input_population)
         for _ in range(length):
             self._step()
 
             if progress_bar is True:
                 bar.next()
         
-    def reset(self) -> None:
+    def reset(self, input_population:Population=None) -> None:
         """
         Reset the simulation
         """
 
-        old_agents, self.all_agents = self.all_agents, {}
-        for agent, _ in old_agents.keys():
+        if input_population is not None:
+            old_agents = input_population
+        else:
+            old_agents = [ta[0] for ta in self.all_agents.values()]
+
+        self.all_agents = {}
+        for agent in old_agents:
             agent.reset()
             self.add_agent(agent)
 
@@ -104,6 +114,13 @@ class Map2D(Map):
 
     def __init__(self) -> None:
         super().__init__()
+    
+    def draw_map(self, canvas:Canvas, canvas_width:int, canvas_height:int) -> None:
+        """
+        Draws the map's topology on a given Canvas
+        """
+        
+        raise NotImplementedError("Overriden by other topologies") 
 
     def get_2D_positions(self, *args, **kwargs) -> list[Position]:
         """

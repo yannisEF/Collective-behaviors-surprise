@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-Position = list[int]
-
 def reverse_dict_with_repeat(A_dict:dict):
     """
     Reverses a dictionnary, values that appear several times are casted into a list

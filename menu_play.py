@@ -46,7 +46,7 @@ class PlayMenu(tk.Frame):
 
     def change_pause(self, event=None):
         """
-        Pauses/Runs the selected genome
+        Pauses/Runs the selected population
         """
 
         self.application.is_paused = not(self.application.is_paused)
@@ -59,8 +59,8 @@ class PlayMenu(tk.Frame):
         self.application.canvas.delete('all')
         self.application.map.reset()
 
-        for genome in self.application.genomes:
-            genome.fitness = 0
+        for population in self.application.populations:
+            population.fitness = 0
             
         self.application._make_frame()
     
