@@ -75,7 +75,7 @@ class Map:
             agent.reset_sensors()
             self._detect_others(agent, position, all_positions)
 
-    def run(self, length:int, input_population:Population=None, progress_bar:bool=False) -> None:
+    def run(self, length:int, reset=False, input_population:Population=None, progress_bar:bool=False) -> None:
         """
         Run the environment for a given length
         """
@@ -84,7 +84,9 @@ class Map:
             print()
             bar = Bar("Simulating a run of length {}".format(length), max=length)
         
-        self.reset(input_population)
+        if reset is True:
+            self.reset(input_population)
+            
         for _ in range(length):
             self._step()
 

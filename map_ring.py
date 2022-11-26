@@ -27,7 +27,7 @@ class MapRing(Map2D):
 
     def __init__(
         self,
-        noise:float = .01,
+        noise:float = 1e-2,
         ring_length:int = 25,
     ) -> None:
 
@@ -55,8 +55,8 @@ class MapRing(Map2D):
         """
         
         position_shift = self.a_to_m_dir[agent.direction] * agent.speed
-        position_shift += self.noise * random.choice([-1,1])
-        
+        position_shift += self.noise * (2 * random.random() - 1)
+ 
         return (current_position + position_shift) % self.ring_length
     
     def _detect_others(self, agent:Agent, position:Position, all_positions:list[Position]) -> None:

@@ -5,5 +5,5 @@ params_ring_agent = {
         ([0,.5], 0),
         ([.5,1.], 0)
     ),
-    "speed":.01
+    "speed":.1
 }
