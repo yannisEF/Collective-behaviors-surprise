@@ -104,9 +104,11 @@ class ActionNetwork(GenomeNetwork):
         self.total_size = self._compute_total_size()
 
     def forward(self, x):
-        relu = torch.nn.ReLU()(self.fully_connected1(x))
-        sig = torch.nn.Sigmoid()(self.fully_connected2(relu))
-        return int(sig.detach().numpy()[0] * self.nb_directions)
+        with torch.no_grad():
+            relu = torch.nn.ReLU()(self.fully_connected1(x))
+            sig = torch.nn.Sigmoid()(self.fully_connected2(relu))
+            res = int(sig.detach().numpy()[0] * self.nb_directions)
+        return res
 
 
 class PredictionNetwork(GenomeNetwork):
@@ -138,11 +140,14 @@ class PredictionNetwork(GenomeNetwork):
         self.hn = torch.randn(1, 1, 4)
 
     def forward(self, x):
-        out, self.hn = self.fully_connected1(x, self.hn)
-        relu = torch.nn.ReLU()(out)
-        sig = torch.nn.Sigmoid()(self.fully_connected2(relu))
+        with torch.no_grad():
+            out, self.hn = self.fully_connected1(x, self.hn)
+            relu = torch.nn.ReLU()(out)
+            sig = torch.nn.Sigmoid()(self.fully_connected2(relu))
 
-        return np.array(
-            np.round(sig[None, None, :].detach().numpy()[0]),
-            dtype=bool
-        ).flatten()
+            res = np.array(
+                np.round(sig[None, None, :].detach().numpy()[0]),
+                dtype=bool
+            ).flatten()
+        
+        return res

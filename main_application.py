@@ -3,9 +3,9 @@ import torch
 import numpy as np
 import tkinter as tk
 
+from scoop import futures
 from progress.bar import Bar
 
-from agents import Agent
 from agents_params import params_ring_agent
 from agents_utils import Population
 from map import Map2D
@@ -163,7 +163,6 @@ class MainApplication(tk.Frame):
         self._draw_map()
         self._draw_agents()
 
-
 # ALL SCORES NOT HERE, NOT LINKED TO GRAPH APPLICATION
     def _compute_population_fitness(self, population_tensor):
         """
@@ -240,7 +239,7 @@ class MainApplication(tk.Frame):
 
         # CMA-ES
         start_solutions = np.array(population_to_evolve.to_tensor())
-        es = cma.purecma.CMAES(start_solutions, 0.5)
+        es = cma.CMAEvolutionStrategy(start_solutions, 2.5)
 
         # Data to register
         gen_fitness = []
@@ -249,7 +248,7 @@ class MainApplication(tk.Frame):
         i = 0
         while not es.stop() and i < max_generations:
             solutions = es.ask()
-            fitness = [self._compute_population_fitness(gen) for gen in solutions]
+            fitness = list(futures.map(self._compute_population_fitness, solutions))
             es.tell(solutions, [-fit for fit in fitness]) # minimization so take opposite of fitness
 
             gen_fitness.append(np.max(fitness))
@@ -294,7 +293,7 @@ class MainApplication(tk.Frame):
         """
 
         if self.is_paused is False and len(self.populations) != 0:
-            self.map.run(self.play_menu.scale_speed.get())            
+            self.map.run(self.play_menu.scale_speed.get())          
             self._make_frame()
 
         self.after(int(self.base_speed/self.simulation_speed), self.run)

@@ -52,7 +52,7 @@ class Map:
             new_position = self._init_agent_position()
             self.all_agents[new_id] = [new_agent, new_position]
 
-    def _step(self) -> None:
+    def _step(self, no_prediction:bool=False) -> None:
         """
         Run a step of the environment
         """
@@ -60,9 +60,12 @@ class Map:
         all_positions = []
         for agent, position in self.all_agents.values():
             # The agents take their decision
-            agent.compute_surprise()
-            agent.take_decision()
-            agent.predict_sensors()
+            if no_prediction is False:
+                agent.compute_surprise()
+                agent.take_decision()
+                agent.predict_sensors()
+            else:
+                agent.take_decision()
 
             # The map updates the agents' position
             new_position = self._move_agent(agent, position)
@@ -75,7 +78,14 @@ class Map:
             agent.reset_sensors()
             self._detect_others(agent, position, all_positions)
 
-    def run(self, length:int, reset=False, input_population:Population=None, progress_bar:bool=False) -> None:
+    def run(
+        self,
+        length:int,
+        reset:bool=False,
+        no_prediction:bool=False,
+        input_population:Population=None,
+        progress_bar:bool=False
+    ) -> None:
         """
         Run the environment for a given length
         """
@@ -88,7 +98,7 @@ class Map:
             self.reset(input_population)
             
         for _ in range(length):
-            self._step()
+            self._step(no_prediction=no_prediction)
 
             if progress_bar is True:
                 bar.next()
