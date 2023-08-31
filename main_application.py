@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import tkinter as tk
 
+from scoop import futures
 from progress.bar import Bar
 
 
@@ -23,7 +24,7 @@ class MainApplication(tk.Frame):
     An application that allows to visualize the simulation, currently only on a ring map.
     """
 
-    frame_side_separation_parameters = {"height":40}
+    frame_side_separation_parameters = {"height": 40}
     canvas_parameters = {"width":800, "height":600, "bg":"black"}
     map_parameters = {"width":6, "size":500, "color":"white"}
     agent_parameters = {"size":12, "color":"lightgreen"}
@@ -234,7 +235,7 @@ class MainApplication(tk.Frame):
         i = 0
         while not es.stop() and i < max_generations:
             solutions = es.ask()
-            fitness = [self._compute_genome_fitness(gen) for gen in solutions]
+            fitness = list(futures.map(self._compute_population_fitness, solutions))
             es.tell(solutions, [-fit for fit in fitness]) # minimization so take opposite of fitness
 
             gen_fitness.append(np.max(fitness))
